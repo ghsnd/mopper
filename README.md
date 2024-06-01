@@ -17,16 +17,13 @@ mopper -m my-mapping-file.json
 
 To check all options, run `mopper --help`
 ```
-Usage: mopper -m <mapping-file> [--v] [--q]
-
-Execute an AlgeMapLoom mapping plan
+Usage: mopper [OPTIONS] --mapping-file <FILE>
 
 Options:
-  -m, --mapping-file
-                    the path to the AlgeMapLoom mapping plan (JSON)
-  --v               increase log level
-  --q               be quiet; no logging
-  --help            display usage information
+  -m, --mapping-file <FILE>  the path to the AlgeMapLoom mapping plan (JSON)
+  -v, --verbose...           increase log level
+  -q, --quiet                be quiet; no logging
+  -h, --help                 Print help
 ```
 
 ## Building
