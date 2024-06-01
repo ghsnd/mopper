@@ -12,6 +12,6 @@ serde_json = "1.0"
 serde = { version = "1.0.198", features = ["derive"] }
 operator = {git = "https://github.com/s-minoo/algemaploom-rs"}
 pct-str = "2.0.0"
-argh = "0.1.12"
 stderrlog = "0.6"
 log = "0.4"
+clap = { version = "4.5.4", features = ["derive"] }
