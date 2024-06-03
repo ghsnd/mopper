@@ -81,7 +81,7 @@ impl SerializeOperator {
                                             data_type_str
                                         },
                                         "iri" => {
-                                            // The format! marcro would do fine, but is slower
+                                            // The format! macro would do fine, but is slower
                                             let mut str = String::new();
                                             str.push('<');
                                             str.push_str(value);
@@ -94,6 +94,11 @@ impl SerializeOperator {
                                             str.push('"');
                                             str.push_str(value);
                                             str.push('"');
+                                            str
+                                        },
+                                        "blank" => {
+                                            let mut str = String::from("_:");
+                                            str.push_str(value);
                                             str
                                         }
                                         _ => {

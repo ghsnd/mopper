@@ -208,7 +208,6 @@ impl LiteralFunction {
          "lit"
      }
 
-
      fn exec(&self, input: &[String]) -> Vec<String> {
          self.inner_function.exec(input)
     }
@@ -240,5 +239,31 @@ impl BasicFunction for ReferenceFunction {
 
     fn exec(&self, input: &[String]) -> Vec<String> {
         vec![input[self.index].to_string()]
+    }
+}
+
+///////////////// Literal /////////////////
+pub struct BlankNodeFunction {
+    inner_function: Box<dyn BasicFunction + Send>
+}
+
+impl BlankNodeFunction {
+    pub fn new(inner_function: Box<dyn BasicFunction + Send>) -> Self {
+        BlankNodeFunction { inner_function }
+    }
+}
+
+impl BasicFunction for BlankNodeFunction {
+
+    fn variable_names(&mut self, variable_names: Vec<String>) {
+        self.inner_function.variable_names(variable_names);
+    }
+
+    fn get_result_type(&self) -> &str {
+        "blank"
+    }
+    
+    fn exec(&self, input: &[String]) -> Vec<String> {
+        self.inner_function.exec(input)
     }
 }

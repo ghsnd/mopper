@@ -72,7 +72,7 @@ Mapping features:
 - [x] Projection operator
 - [x] Fragmenting
 - [x] Join operator (only inner join)
-- [ ] Blank node generation function
+- [x] Blank node generation function
 - [ ] Concatenate function
 - [ ] Replace function
 - [ ] To uppercase  / lowercase function
