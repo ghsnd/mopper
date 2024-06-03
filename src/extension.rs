@@ -21,7 +21,7 @@ use std::thread::JoinHandle;
 use crossbeam_channel::{Receiver, Sender};
 use log::{debug, error};
 use operator::Function;
-use crate::basic_functions::{BasicFunction, ConstantFunction, IriFunction, LiteralFunction, ReferenceFunction, TemplateStrFunction};
+use crate::basic_functions::{BasicFunction, BlankNodeFunction, ConstantFunction, IriFunction, LiteralFunction, ReferenceFunction, TemplateStrFunction};
 
 pub struct ExtendOperator {
     functions_mutex: Arc<Mutex<Vec<(String, Box<dyn BasicFunction + Send>)>>>,
@@ -124,9 +124,10 @@ fn get_function(function: &Function) -> Box<dyn BasicFunction + Send> {
             error!(" function 'TemplateFunctionValue' not implemented yet.");
             todo!()
         },
-        Function::BlankNode { .. } => {
-            error!(" function 'BlankNode' not implemented yet.");
-            todo!()
+        Function::BlankNode { inner_function } => {
+            debug!(" function 'BlankNode'");
+            let inner = get_function(inner_function);
+            Box::new(BlankNodeFunction::new(inner))
         },
         Function::Concatenate { .. } => {
             error!(" function 'Concatenate' not implemented yet.");
