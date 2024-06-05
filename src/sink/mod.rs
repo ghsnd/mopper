@@ -14,4 +14,4 @@
  *    limitations under the License.
  */
 
-pub mod std_out;
+pub mod writer_sink;

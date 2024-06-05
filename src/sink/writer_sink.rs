@@ -14,34 +14,43 @@
  *    limitations under the License.
  */
 
-use std::{io, thread};
 use std::io::Write;
+use std::sync::{Arc, Mutex};
+use std::thread;
 use std::thread::JoinHandle;
 use crossbeam_channel::Receiver;
 use log::debug;
 
-pub struct StdOutSink {}
+pub struct WriterSink {
+    writer_mutex: Arc<Mutex<dyn Write + Send>>
+}
 
-impl StdOutSink {
-    pub fn new() -> &'static Self {
-        debug!("Creating StdOutSink...");
-        let boxed = Box::new(StdOutSink{});
+impl WriterSink {
+    pub fn new(out: Box<dyn Write + Send>) -> &'static Self {
+        debug!("Creating WriterSink...");
+        let boxed = Box::new(WriterSink {
+            writer_mutex: Arc::new(Mutex::new(out))
+        });
         Box::leak(boxed)
     }
     
     pub fn start (&'static self, rx_chan: Receiver<Vec<String>>) -> JoinHandle<()> {
-        debug!("Starting StdOutSink!");
+        debug!("Starting WriterSink!");
+        
+        let writer_clone = self.writer_mutex.clone();
+        
         thread::spawn(move || {
-            let std_out = io::stdout();
             for data in rx_chan {
-                let mut out = std_out.lock();
+                let mut out = writer_clone.lock().unwrap();
                 data.iter()
-                    .skip(1) // ignore node id
+                    .skip(1)
                     .for_each(|line| {
                         out.write_all(line.as_bytes()).unwrap();
                         out.write(b"\n").unwrap();
                     });
             }
+            let mut out = writer_clone.lock().unwrap();
+            out.flush().unwrap();
         })
     }
 }
