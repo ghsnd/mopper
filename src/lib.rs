@@ -154,11 +154,9 @@ pub fn start(algemaploom_plan: &str, force_std_out: bool, force_to_file: Option<
                             let writer_sink = WriterSink::new(Box::new(stdout));
                             join_handles.push(writer_sink.start(receiver));
                         },
-                        IOType::File => {
-                            //config.configuration
-                        }
                         _ => {
                             error!("Target type {:?} not implemented yet!", config.target_type);
+                            error!("You can force all output to be written to standard out or a file.");
                             todo!();
                         }
                     }
