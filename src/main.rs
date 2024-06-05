@@ -36,6 +36,14 @@ struct Args {
     /// be quiet; no logging
     #[arg(short, long)]
     quiet: bool,
+    
+    /// force output to standard out, ignoring the targets in the plan.
+    #[arg(long)]
+    force_std_out: bool,
+    
+    /// force output to file, ignoring the targets in the plan.
+    #[arg(long, value_name = "FILE")]
+    force_to_file: Option<String>
 }
 
 fn main() {
@@ -54,5 +62,5 @@ fn main() {
     info!("Reading mapping plan...");
     let path_to_plan_serialisation = &args.mapping_file;
     let json_plan = fs::read_to_string(path_to_plan_serialisation).unwrap();
-    start(&json_plan);
+    start(&json_plan, args.force_std_out, args.force_to_file);
 }

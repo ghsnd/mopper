@@ -26,9 +26,12 @@ mod join;
 
 
 use std::collections::HashMap;
+use std::fs::File;
+use std::io;
+use std::io::BufWriter;
 use std::thread::JoinHandle;
 use crossbeam_channel::{bounded, Receiver, Sender};
-use log::info;
+use log::{error, info};
 use operator::{Function, IOType, Operator};
 use operator::formats::ReferenceFormulation;
 use crate::extension::ExtendOperator;
@@ -36,12 +39,16 @@ use crate::join::JoinOperator;
 use crate::plan::PlanGraph;
 use crate::plan_rewriter::rewrite;
 use crate::serializer::SerializeOperator;
-use crate::sink::std_out::StdOutSink;
+use crate::sink::writer_sink::WriterSink;
 use crate::source::csv_file::CSVFileSource;
 
 type VecSender = Sender<Vec<String>>;
 type VecReceiver = Receiver<Vec<String>>;
-pub fn start(algemaploom_plan: &str) {
+pub fn start_default(algemaploom_plan: &str) {
+    start(algemaploom_plan, false, None);
+}
+pub fn start(algemaploom_plan: &str, force_std_out: bool, force_to_file: Option<String>) {
+    
     let plan_graph: PlanGraph = serde_json::from_str(algemaploom_plan).unwrap();
 
     info!("Optimizing plan a little bit...");
@@ -120,11 +127,42 @@ pub fn start(algemaploom_plan: &str) {
             },
 
             // Create a Target operator
-            Operator::TargetOp { .. } => {
-                // TODO: do sometinh with config, just create a std out sink for now
+            Operator::TargetOp { config } => {
                 let receiver = receiver_map.remove(id).unwrap();
-                let std_out_sink = StdOutSink::new();
-                join_handles.push(std_out_sink.start(receiver));
+                
+                // Forcing output to standard out or to file overrides the target settings
+                let mut forced_output = false;
+                if force_std_out {
+                    forced_output = true;
+                    let stdout = io::stdout();
+                    let writer_sink = WriterSink::new(Box::new(stdout));
+                    join_handles.push(writer_sink.start(receiver.clone())); // is this a good idea?
+                }
+                if let Some(file_path) = &force_to_file {
+                    forced_output = true;
+                    let file = File::create(file_path).unwrap();
+                    let file_out = BufWriter::new(file);
+                    let writer_sink = WriterSink::new(Box::new(file_out));
+                    join_handles.push(writer_sink.start(receiver.clone())); // is this a good idea?
+                } 
+                if !forced_output {
+
+                    // TODO: do something with config, just create a std out sink for now
+                    match config.target_type {
+                        IOType::StdOut => {
+                            let stdout = io::stdout();
+                            let writer_sink = WriterSink::new(Box::new(stdout));
+                            join_handles.push(writer_sink.start(receiver));
+                        },
+                        IOType::File => {
+                            //config.configuration
+                        }
+                        _ => {
+                            error!("Target type {:?} not implemented yet!", config.target_type);
+                            todo!();
+                        }
+                    }
+                }
             },
 
             Operator::JoinOp {config} => {
@@ -149,4 +187,5 @@ pub fn start(algemaploom_plan: &str) {
     for join_handle in join_handles {
         join_handle.join().unwrap();
     }
+    info!("Done!");
 }
