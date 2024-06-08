@@ -28,7 +28,7 @@ pub struct SerializeOperator {
 }
 impl SerializeOperator {
     pub fn new(config: &Serializer, node_id: &usize) -> &'static Self {
-        debug!("Initializing Serialize operator.");
+        debug!("Initializing Serialize operator {node_id}.");
         if config.format != DataFormat::NQuads && config.format != DataFormat::NTriples {
             error!("Serializer: only NQuads / NTriples supported at the moment!");
             todo!()
@@ -43,7 +43,7 @@ impl SerializeOperator {
     }
     
     pub fn start(&'static self, rx_chan: Receiver<Vec<String>>, tx_channels: Vec<Sender<Vec<String>>>) -> JoinHandle<()> {
-        debug!("Starting Serialize!");
+        debug!("Starting Serialize {}!", self.node_id);
         
         thread::spawn(move || {
             

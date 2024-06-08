@@ -22,32 +22,31 @@ use crossbeam_channel::Receiver;
 use log::debug;
 
 pub struct WriterSink {
-    writer_mutex: Arc<Mutex<dyn Write + Send>>
+    writer_mutex: Arc<Mutex<dyn Write + Send>>,
+    node_id: String
 }
 
 impl WriterSink {
-    pub fn new(out: Box<dyn Write + Send>) -> &'static Self {
-        debug!("Creating WriterSink...");
+    pub fn new(out: Box<dyn Write + Send>, node_id: &usize) -> &'static Self {
+        debug!("Creating WriterSink {node_id}...");
         let boxed = Box::new(WriterSink {
-            writer_mutex: Arc::new(Mutex::new(out))
+            writer_mutex: Arc::new(Mutex::new(out)),
+            node_id: node_id.to_string()
         });
         Box::leak(boxed)
     }
     
     pub fn start (&'static self, rx_chan: Receiver<Vec<String>>) -> JoinHandle<()> {
-        debug!("Starting WriterSink!");
+        debug!("Starting WriterSink {}", self.node_id);
         
         let writer_clone = self.writer_mutex.clone();
         
         thread::spawn(move || {
             for data in rx_chan {
+                let mut data_to_write = data[1..].join("\n");
+                data_to_write.push('\n');
                 let mut out = writer_clone.lock().unwrap();
-                data.iter()
-                    .skip(1)
-                    .for_each(|line| {
-                        out.write_all(line.as_bytes()).unwrap();
-                        out.write(b"\n").unwrap();
-                    });
+                out.write_all(&data_to_write.as_bytes()).unwrap()
             }
             let mut out = writer_clone.lock().unwrap();
             out.flush().unwrap();

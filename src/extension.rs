@@ -30,7 +30,7 @@ pub struct ExtendOperator {
 
 impl ExtendOperator {
     pub fn new(extend_pairs: &HashMap<String, Function>, node_id: &usize) -> &'static Self {
-        debug!("Initializing Extend operator.");
+        debug!("Initializing Extend operator {node_id}.");
         let functions: Vec<(String, Box<dyn BasicFunction + Send>)> = extend_pairs.iter()
             .map(|(name, function)| {
                 (name.to_string(), get_function(function))
@@ -43,7 +43,7 @@ impl ExtendOperator {
     }
 
     pub fn start(&'static self, rx_chan: Receiver<Vec<String>>, tx_channels: Vec<Sender<Vec<String>>>) -> JoinHandle<()> {
-        debug!("Starting ExtendOperator!");
+        debug!("Starting ExtendOperator {}!", self.node_id);
 
         let functions_clone = self.functions_mutex.clone();
         

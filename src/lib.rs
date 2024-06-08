@@ -51,7 +51,6 @@ pub fn start(algemaploom_plan: &str, force_std_out: bool, force_to_file: Option<
     
     let plan_graph: PlanGraph = serde_json::from_str(algemaploom_plan).unwrap();
 
-    info!("Optimizing plan a little bit...");
     let reduced_plan = rewrite(&plan_graph);
 
     info!("Initializing execution engine...");
@@ -135,14 +134,15 @@ pub fn start(algemaploom_plan: &str, force_std_out: bool, force_to_file: Option<
                 if force_std_out {
                     forced_output = true;
                     let stdout = io::stdout();
-                    let writer_sink = WriterSink::new(Box::new(stdout));
+                    let writer_sink = WriterSink::new(Box::new(stdout), id);
                     join_handles.push(writer_sink.start(receiver.clone())); // is this a good idea?
                 }
                 if let Some(file_path) = &force_to_file {
                     forced_output = true;
+                    // TODO: if there are multiple threads writing to the same file, they might truncate
                     let file = File::create(file_path).unwrap();
                     let file_out = BufWriter::new(file);
-                    let writer_sink = WriterSink::new(Box::new(file_out));
+                    let writer_sink = WriterSink::new(Box::new(file_out), id);
                     join_handles.push(writer_sink.start(receiver.clone())); // is this a good idea?
                 } 
                 if !forced_output {
@@ -151,7 +151,7 @@ pub fn start(algemaploom_plan: &str, force_std_out: bool, force_to_file: Option<
                     match config.target_type {
                         IOType::StdOut => {
                             let stdout = io::stdout();
-                            let writer_sink = WriterSink::new(Box::new(stdout));
+                            let writer_sink = WriterSink::new(Box::new(stdout), id);
                             join_handles.push(writer_sink.start(receiver));
                         },
                         _ => {

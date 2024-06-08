@@ -17,6 +17,7 @@
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::BufReader;
+use std::iter::once;
 use std::ops::Index;
 use std::thread;
 use std::thread::JoinHandle;
@@ -79,20 +80,24 @@ impl CSVFileSource {
                 }
                 
                 // prepend node_id to attributes
-                let mut node_id_plus_headers = vec![self.node_id.clone()];
-                node_id_plus_headers.extend(self.attributes.iter().map(|value| value.to_string()));
+                let node_id_plus_headers: Vec<String> = once(&self.node_id)
+                    .chain(self.attributes.iter())
+                    .map(|data| data.to_string())
+                    .collect();
                 
                 tx_channels.iter()
                     .for_each(|tx_chan| tx_chan.send(node_id_plus_headers.clone()).unwrap());
             }
             
-            for result in rdr.records() {
+            for result in iter {
                 let record = result.unwrap();
-                let mut node_id_plus_data = vec![self.node_id.clone()];
-                node_id_plus_data.extend(
-                    attribute_indices.iter()
-                        .map(|index| record.index(*index).to_string())
-                );
+                let node_id_plus_data: Vec<String> = once(&self.node_id)
+                    .map(|data| data.to_string())
+                    .chain(
+                        attribute_indices.iter()
+                            .map(|index| String::from(&record.index(*index).to_string()))
+                    )
+                    .collect();
                 tx_channels.iter()
                     .for_each(|tx_chan| tx_chan.send(node_id_plus_data.clone()).unwrap());
             }
