@@ -35,7 +35,7 @@ pub struct JoinOperator {
 
 impl JoinOperator {
     pub fn new(config: &Join, left_node_id: &usize, right_node_id: &usize, node_id: &usize) -> &'static Self {
-        debug!("Initializing Join operator.");
+        debug!("Initializing Join operator {node_id}.");
 
         // Only inner join supported for now.
         if config.join_type != InnerJoin {
@@ -54,7 +54,7 @@ impl JoinOperator {
     }
     
     pub fn start(&'static self, rx_chan: Receiver<Vec<String>>, tx_channels: Vec<Sender<Vec<String>>>) -> JoinHandle<()>{
-        debug!("Starting Join operator!");
+        debug!("Starting Join operator {}!", self.node_id);
         
         thread::spawn(move || {
             let mut left_attribute_names: Vec<String> = Vec::with_capacity(self.left_right_join_attr_pairs.len());

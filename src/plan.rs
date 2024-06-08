@@ -41,6 +41,7 @@ impl Node {
     }
 
     pub fn replace_from(&mut self, old_id: usize, new_id: usize) {
+        // TODO: can be more optimal?
         self.from.iter_mut()
             .for_each(|id| {
                 if *id == old_id {
@@ -48,14 +49,37 @@ impl Node {
                 }
             });
     }
+    
+    pub fn add_all_from(&mut self, ids: &[usize]) {
+        self.from.extend_from_slice(ids);
+    }
 
     pub fn add_to(&mut self, id: usize) {
         self.to.push(id);
     }
     
-    pub fn set_all_to(&mut self, ids: &[usize]) {
-        self.to = ids.to_vec();
+    pub fn add_all_to(&mut self, ids: &[usize]) {
+        self.to.extend_from_slice(ids);
     }
+
+    pub fn replace_to(&mut self, old_id: usize, new_id: usize) {
+        // TODO: can be more optimal?
+        self.to.iter_mut()
+            .for_each(|id| {
+                if *id == old_id {
+                    *id = new_id;
+                }
+            });
+    }
+    
+    pub fn change_to_ids(&mut self, ids_to_add: &[usize], id_to_remove: usize) {
+        self.to = self.to.iter()
+            .filter(|id| **id != id_to_remove)
+            .chain(ids_to_add)
+            .map(|id| *id)
+            .collect();
+    }
+    
     pub fn add_attributes(&mut self, attributes: Option<HashSet<String>>) {
         if self.attributes.is_some() {
             if attributes.is_some() {
