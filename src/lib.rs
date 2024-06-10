@@ -111,7 +111,7 @@ pub fn start(algemaploom_plan: &str, force_std_out: bool, force_to_file: Option<
             // Create an Extension operator
             Operator::ExtendOp { config } => {
                 let extend_pairs: &HashMap<String, Function> = &config.extend_pairs;
-                let extend_operator = ExtendOperator::new(extend_pairs, id);
+                let extend_operator = ExtendOperator::new(extend_pairs, id, &node.join_alias);
                 let senders = sender_map.remove(id).unwrap();
                 let receiver = receiver_map.remove(id).unwrap();
                 join_handles.push(extend_operator.start(receiver, senders));

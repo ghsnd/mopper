@@ -25,11 +25,12 @@ use crate::basic_functions::{BasicFunction, BlankNodeFunction, ConstantFunction,
 
 pub struct ExtendOperator {
     functions_mutex: Arc<Mutex<Vec<(String, Box<dyn BasicFunction + Send>)>>>,
-    node_id: String
+    node_id: String,
+    join_alias: Option<String>
 }
 
 impl ExtendOperator {
-    pub fn new(extend_pairs: &HashMap<String, Function>, node_id: &usize) -> &'static Self {
+    pub fn new(extend_pairs: &HashMap<String, Function>, node_id: &usize, join_alias: &Option<String>) -> &'static Self {
         debug!("Initializing Extend operator {node_id}.");
         let functions: Vec<(String, Box<dyn BasicFunction + Send>)> = extend_pairs.iter()
             .map(|(name, function)| {
@@ -37,7 +38,8 @@ impl ExtendOperator {
             }).collect();
         let boxed = Box::new(ExtendOperator{
             functions_mutex: Arc::new(Mutex::new(functions)),
-            node_id: node_id.to_string()
+            node_id: node_id.to_string(),
+            join_alias: join_alias.clone()
         });
         Box::leak(boxed)
     }
@@ -77,19 +79,49 @@ impl ExtendOperator {
             let variable_names_option = iter.next();
             if variable_names_option.is_some() {
                 let variable_names = variable_names_option.unwrap();
-                functions.iter_mut().for_each(|(_name, function)| {
-                    function.variable_names(variable_names.clone());
-                });
+                
+                // Now here comes a hack to address removed self-joins:
+                // the variable names are duplicated, but the join alias is prepended.
+                // That way the functions keep on working if they expect variable names that would
+                // be used by the join function
+                if let Some(join_alias) = &self.join_alias {
+                    let copy_of_variable_names_with_prefix= variable_names.iter()
+                        .map(|name| {
+                            let mut new_variable_name = join_alias.clone();
+                            new_variable_name.push('_');
+                            new_variable_name.push_str(name);
+                            new_variable_name
+                        });
+                        //.collect();
+                    let new_variable_names: Vec<String> = variable_names.iter()
+                        .cloned()
+                        .chain(copy_of_variable_names_with_prefix)
+                        .collect();
+
+                    functions.iter_mut().for_each(|(_name, function)| {
+                        function.variable_names(new_variable_names.clone());
+                    });
+                    
+                } else {
+                    functions.iter_mut().for_each(|(_name, function)| {
+                        function.variable_names(variable_names.clone());
+                    });
+                }
             }
             
             // Let each function process the data
             for data in iter {
-
+                
+                let data_to_process = match self.join_alias {
+                    Some(_) => data.iter().chain(data.iter()).cloned().collect(), // is this a performant way to append a vec to itself?
+                    None => data
+                };
+                
                 // prepend node id
                 let mut node_id_plus_result = vec![self.node_id.clone()];
                 node_id_plus_result.extend(
                     functions.iter()
-                        .map(|(_name, function)| { function.exec(&data) })
+                        .map(|(_name, function)| { function.exec(&data_to_process) })
                         .flatten()
                 );
 

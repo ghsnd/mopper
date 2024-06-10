@@ -116,7 +116,7 @@ impl JoinOperator {
                             }
                         }
                     }
-                    
+
                 } else if node_id.eq(&self.right_node_id) {
                     // process right data
 
