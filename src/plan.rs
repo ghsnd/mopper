@@ -28,10 +28,12 @@ pub struct Node {
     #[serde(default = "Vec::new")]
     pub from: Vec<usize>,
 
-    #[serde(default = "Vec::new")]
-    pub to: Vec<usize>,
+    #[serde(default = "HashSet::new")]
+    pub to: HashSet<usize>,
 
-    pub attributes: Option<HashSet<String>>
+    pub attributes: Option<HashSet<String>>,
+    
+    pub join_alias: Option<String>
 }
 
 
@@ -55,29 +57,21 @@ impl Node {
     }
 
     pub fn add_to(&mut self, id: usize) {
-        self.to.push(id);
+        self.to.insert(id);
     }
     
-    pub fn add_all_to(&mut self, ids: &[usize]) {
-        self.to.extend_from_slice(ids);
+    pub fn add_all_to(&mut self, ids: &HashSet<usize>) {
+        self.to.extend(ids);
     }
 
     pub fn replace_to(&mut self, old_id: usize, new_id: usize) {
-        // TODO: can be more optimal?
-        self.to.iter_mut()
-            .for_each(|id| {
-                if *id == old_id {
-                    *id = new_id;
-                }
-            });
+        self.to.remove(&old_id);
+        self.to.insert(new_id);
     }
     
-    pub fn change_to_ids(&mut self, ids_to_add: &[usize], id_to_remove: usize) {
-        self.to = self.to.iter()
-            .filter(|id| **id != id_to_remove)
-            .chain(ids_to_add)
-            .map(|id| *id)
-            .collect();
+    pub fn change_to_ids(&mut self, ids_to_add: &HashSet<usize>, id_to_remove: usize) {
+        self.to.remove(&id_to_remove);
+        self.to.extend(ids_to_add);
     }
     
     pub fn add_attributes(&mut self, attributes: Option<HashSet<String>>) {

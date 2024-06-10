@@ -34,6 +34,7 @@ pub fn rewrite(plan: &PlanGraph) -> HashMap<usize, Node> {
     let mut fragment_indices = Vec::new();
     let mut projection_indices = Vec::new();
     let mut io_hash_to_node_index: HashMap<u64, Vec<usize>> = HashMap::new();
+    let mut join_indices = Vec::new();
     
     plan.nodes.iter().enumerate().for_each(|(id, node)| {
         match &node.operator {
@@ -48,7 +49,10 @@ pub fn rewrite(plan: &PlanGraph) -> HashMap<usize, Node> {
             },
             Operator::TargetOp { config } => {
                 add_to_hash_map(&mut io_hash_to_node_index, config, id);
-            }
+            },
+            Operator::JoinOp { .. } => {
+                join_indices.push(id);
+            },
             _ => {}
         }
         node_map.insert(id, node.clone());
@@ -162,10 +166,45 @@ pub fn rewrite(plan: &PlanGraph) -> HashMap<usize, Node> {
         }
     }
     
-    // TODO: remove self-joins. In the (reduced) plan this would be a join node with one "from".
+    debug!("Removing self-join nodes from plan.");
+    let mut self_join_nodes_to_remove: Vec<usize> = Vec::new();
+    let mut changed_join_connected_nodes: Vec<(usize, Node)> = Vec::new();
     
-    let final_no_of_nodes = node_map.len();
-    info!("Reduced number of nodes in the plan from {initial_nr_of_nodes} to {final_no_of_nodes}");
+    for join_index in join_indices {
+        let join_node = &node_map[&join_index];
+        if join_node.from[0] == join_node.from[1] {
+            self_join_nodes_to_remove.push(join_index);
+            // make sure the renamed attributes also get passed
+            match &join_node.operator {
+                Operator::JoinOp { config } => {
+                    let join_alias = &config.join_alias;
+                    for to_node_id in &join_node.to {
+                        let mut to_node = node_map[to_node_id].clone();
+                        to_node.replace_from(join_index, join_node.from[0]);
+                        to_node.join_alias = Some(join_alias.to_string());
+                        changed_join_connected_nodes.push((*to_node_id, to_node));
+                    }
+                    let from_node_id = &join_node.from[0];
+                    let mut from_node = node_map[from_node_id].clone();
+                    from_node.change_to_ids(&join_node.to, join_index);
+                    changed_join_connected_nodes.push((*from_node_id, from_node));
+                },
+                _ => {}
+            }
+        }
+    }
+    for (node_id, updated_node) in changed_join_connected_nodes {
+        debug!("Updating node {node_id} affected by removing self-join node");
+        node_map.insert(node_id, updated_node);
+    }
+    
+    for id in self_join_nodes_to_remove {
+        debug!("Removing self-join {id}");
+        node_map.remove(&id);
+    }
+    
+    let final_nr_of_nodes = node_map.len();
+    info!("Reduced number of nodes in the plan from {initial_nr_of_nodes} to {final_nr_of_nodes}");
     
     node_map
 }
