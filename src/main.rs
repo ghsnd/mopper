@@ -37,7 +37,7 @@ struct Args {
     #[arg(short, long)]
     quiet: bool,
     
-    /// force output to standard out, ignoring the targets in the plan.
+    /// force output to standard out, ignoring the targets in the plan. Takes precedence over --force-to-file
     #[arg(long)]
     force_std_out: bool,
     

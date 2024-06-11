@@ -48,10 +48,12 @@ pub fn start_default(algemaploom_plan: &str) {
     start(algemaploom_plan, false, None);
 }
 pub fn start(algemaploom_plan: &str, force_std_out: bool, force_to_file: Option<String>) {
+    // force_std_out takes precedence over force_to_file
     
     let plan_graph: PlanGraph = serde_json::from_str(algemaploom_plan).unwrap();
 
-    let reduced_plan = rewrite(&plan_graph);
+    let to_one_target = force_std_out || force_to_file.is_some();
+    let reduced_plan = rewrite(&plan_graph, to_one_target);
 
     info!("Initializing execution engine...");
     // Create map of start node -> `send` channel 
@@ -130,22 +132,16 @@ pub fn start(algemaploom_plan: &str, force_std_out: bool, force_to_file: Option<
                 let receiver = receiver_map.remove(id).unwrap();
                 
                 // Forcing output to standard out or to file overrides the target settings
-                let mut forced_output = false;
                 if force_std_out {
-                    forced_output = true;
                     let stdout = io::stdout();
                     let writer_sink = WriterSink::new(Box::new(stdout), id);
                     join_handles.push(writer_sink.start(receiver.clone())); // is this a good idea?
-                }
-                if let Some(file_path) = &force_to_file {
-                    forced_output = true;
-                    // TODO: if there are multiple threads writing to the same file, they might truncate
+                } else if let Some(file_path) = &force_to_file {
                     let file = File::create(file_path).unwrap();
                     let file_out = BufWriter::new(file);
                     let writer_sink = WriterSink::new(Box::new(file_out), id);
                     join_handles.push(writer_sink.start(receiver.clone())); // is this a good idea?
-                } 
-                if !forced_output {
+                } else {
 
                     // TODO: do something with config, just create a std out sink for now
                     match config.target_type {
@@ -172,7 +168,6 @@ pub fn start(algemaploom_plan: &str, force_std_out: bool, force_to_file: Option<
                 let senders = sender_map.remove(id).unwrap();
                 let receiver = receiver_map.remove(id).unwrap();
                 join_handles.push(join_operator.start(receiver, senders));
-                println!();
             },
 
             _ => todo!()
