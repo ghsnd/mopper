@@ -27,7 +27,7 @@ use crate::plan::{Node, PlanGraph};
 
 // TODO: if output is forced to std out and/or file, don't hash and put everything to e.g. 0 (and 1)
 
-pub fn rewrite(plan: &PlanGraph) -> HashMap<usize, Node> {
+pub fn rewrite(plan: &PlanGraph, to_one_target: bool) -> HashMap<usize, Node> {
     info!("Optimizing AlgeMapLoom plan a bit.");
     let mut node_map: HashMap<usize, Node> = HashMap::new();
     
@@ -45,10 +45,10 @@ pub fn rewrite(plan: &PlanGraph) -> HashMap<usize, Node> {
                 projection_indices.push(id);
             },
             Operator::SourceOp { config} => {
-                add_to_hash_map(&mut io_hash_to_node_index, config, id);
+                add_to_hash_map(&mut io_hash_to_node_index, config, id, false);
             },
             Operator::TargetOp { config } => {
-                add_to_hash_map(&mut io_hash_to_node_index, config, id);
+                add_to_hash_map(&mut io_hash_to_node_index, config, id, to_one_target);
             },
             Operator::JoinOp { .. } => {
                 join_indices.push(id);
@@ -209,12 +209,17 @@ pub fn rewrite(plan: &PlanGraph) -> HashMap<usize, Node> {
     node_map
 }
 
-fn add_to_hash_map<T: Hash>(io_hash_to_node_index: &mut HashMap<u64, Vec<usize>>, config: T, id: usize) {
+fn add_to_hash_map<T: Hash>(io_hash_to_node_index: &mut HashMap<u64, Vec<usize>>, config: T, id: usize, constant_hash: bool) {
     // The idea here is to group sources with the same configuration together as they are
     // basically the same. The next step is then to merge them into one source.
-    let mut hasher = DefaultHasher::new();
-    config.hash(&mut hasher);
-    let hash = hasher.finish();
+    let hash = match constant_hash {
+        true => 0,
+        false => {
+            let mut hasher = DefaultHasher::new();
+            config.hash(&mut hasher);
+            hasher.finish()
+        }
+    };
     if io_hash_to_node_index.contains_key(&hash) {
         let node_ids = io_hash_to_node_index.get_mut(&hash).unwrap();
         node_ids.push(id);
