@@ -44,7 +44,7 @@ impl ExtendOperator {
         Box::leak(boxed)
     }
 
-    pub fn start(&'static self, rx_chan: Receiver<Vec<String>>, tx_channels: Vec<Sender<Vec<String>>>) -> JoinHandle<()> {
+    pub fn start(&'static self, rx_chan: Receiver<Vec<String>>, tx_channels: Vec<Sender<Vec<String>>>) -> JoinHandle<(u8, String)> {
         debug!("Starting ExtendOperator {}!", self.node_id);
 
         let functions_clone = self.functions_mutex.clone();
@@ -128,8 +128,10 @@ impl ExtendOperator {
                 tx_channels.iter()
                     .for_each(|tx_chan| tx_chan.send(node_id_plus_result.clone()).unwrap());
             }
+
+            (0, String::new())
+            
         })
-        
     }
 }
 

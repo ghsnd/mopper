@@ -53,7 +53,7 @@ impl JoinOperator {
         Box::leak(boxed)
     }
     
-    pub fn start(&'static self, rx_chan: Receiver<Vec<String>>, tx_channels: Vec<Sender<Vec<String>>>) -> JoinHandle<()>{
+    pub fn start(&'static self, rx_chan: Receiver<Vec<String>>, tx_channels: Vec<Sender<Vec<String>>>) -> JoinHandle<(u8, String)>{
         debug!("Starting Join operator {}!", self.node_id);
         
         thread::spawn(move || {
@@ -163,6 +163,9 @@ impl JoinOperator {
                     }
                 }
             }
+
+            (0, String::new())
+            
         })
     }
 }
@@ -272,12 +275,12 @@ impl JoinData {
         }
 
         if result.is_empty() {
-            return None
+            None
         } else {
             let final_result: Vec<&Vec<String>> = result.iter()
                 .map(|index| &self.data[*index])
                 .collect();
-            return Some(final_result)
+            Some(final_result)
         }
     }
 }

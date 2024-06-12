@@ -22,7 +22,7 @@ use std::ops::Index;
 use std::thread;
 use std::thread::JoinHandle;
 use crossbeam_channel::Sender;
-use log::{debug, warn};
+use log::{debug, error, warn};
 
 pub struct CSVFileSource {
     file_path: String,
@@ -49,12 +49,18 @@ impl CSVFileSource {
         Box::leak(boxed)
     }
 
-    pub fn start(&'static self, tx_channels: Vec<Sender<Vec<String>>>) -> JoinHandle<()> {
+    pub fn start(&'static self, tx_channels: Vec<Sender<Vec<String>>>) -> JoinHandle<(u8, String)> {
         thread::spawn(move || {
             debug!("Starting CSVFileSource!");
                         
-            let file = File::open(self.file_path.clone()).unwrap();
-            let br = BufReader::new(file);
+            let file_res = File::open(self.file_path.clone());
+            if let Err(file_err) = file_res {
+                let msg = format!("Cannot open {}: {}", self.file_path, file_err.to_string());
+                error!("{msg}");
+                return (1u8, msg)
+            }
+                //.expect(format!("File not found: {}", self.file_path).as_str());
+            let br = BufReader::new(file_res.unwrap());
             let mut rdr = 
                 csv::ReaderBuilder::new()
                     .has_headers(false)
@@ -101,6 +107,8 @@ impl CSVFileSource {
                 tx_channels.iter()
                     .for_each(|tx_chan| tx_chan.send(node_id_plus_data.clone()).unwrap());
             }
+
+            (0, String::new())
         })
     }
 }

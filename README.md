@@ -50,7 +50,7 @@ Input formats:
 - [ ] XML
 
 Input / output types:
-- [x] File (only input)
+- [x] File
 - [x] Standard out
 - [ ] Standard in
 - [ ] Stream (e.g. Kafka, Websocket)
@@ -70,10 +70,11 @@ Mapping features:
 - [x] IRI generation
 - [x] Projection operator
 - [x] Fragmenting
-- [x] Join operator (only inner join)
+- [x] Join operator (only inner join with `equals` condition)
 - [x] Blank node generation function
 - [ ] Concatenate function
 - [ ] Replace function
 - [ ] To uppercase  / lowercase function
 - [ ] FnO function handling
 - [ ] Rename operator
+- [ ] Deduplication

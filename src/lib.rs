@@ -23,9 +23,11 @@ mod serializer;
 mod sink;
 mod plan_rewriter;
 mod join;
+pub mod error;
 
 
 use std::collections::HashMap;
+use std::error::Error;
 use std::fs::File;
 use std::io;
 use std::io::BufWriter;
@@ -34,6 +36,7 @@ use crossbeam_channel::{bounded, Receiver, Sender};
 use log::{error, info};
 use operator::{Function, IOType, Operator};
 use operator::formats::ReferenceFormulation;
+use crate::error::GeneralError;
 use crate::extension::ExtendOperator;
 use crate::join::JoinOperator;
 use crate::plan::PlanGraph;
@@ -44,10 +47,10 @@ use crate::source::csv_file::CSVFileSource;
 
 type VecSender = Sender<Vec<String>>;
 type VecReceiver = Receiver<Vec<String>>;
-pub fn start_default(algemaploom_plan: &str) {
-    start(algemaploom_plan, false, None);
+pub fn start_default(algemaploom_plan: &str) -> Result<(), Box<dyn Error>> {
+    start(algemaploom_plan, false, None)
 }
-pub fn start(algemaploom_plan: &str, force_std_out: bool, force_to_file: Option<String>) {
+pub fn start(algemaploom_plan: &str, force_std_out: bool, force_to_file: Option<String>) -> Result<(), Box<dyn Error>> {
     // force_std_out takes precedence over force_to_file
     
     let plan_graph: PlanGraph = serde_json::from_str(algemaploom_plan).unwrap();
@@ -84,7 +87,7 @@ pub fn start(algemaploom_plan: &str, force_std_out: bool, force_to_file: Option<
     }
 
     // Create a vector of the join handles created by the operator threads.
-    let mut join_handles: Vec<JoinHandle<()>> = Vec::new();
+    let mut join_handles: Vec<JoinHandle<(u8, String)>> = Vec::new();
 
     for (id, node) in reduced_plan.iter() {
         let operator = &node.operator;
@@ -177,8 +180,21 @@ pub fn start(algemaploom_plan: &str, force_std_out: bool, force_to_file: Option<
 
     info!("Up and running!");
 
+    let mut errors: Vec<(u8, String)> = Vec::new();
     for join_handle in join_handles {
-        join_handle.join().unwrap();
+        let (err_code, msg) = join_handle.join().unwrap();
+        if err_code > 0 {
+            error!("{msg}");
+            errors.push((err_code, msg));
+        }
     }
-    info!("Done!");
+    
+    if errors.is_empty() {
+        info!("Done!");
+        Ok(())
+    } else {
+        Err(Box::new(GeneralError::new(errors)))
+    }
+    
+    
 }

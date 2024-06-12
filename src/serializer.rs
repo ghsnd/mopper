@@ -42,7 +42,7 @@ impl SerializeOperator {
         Box::leak(boxed)
     }
     
-    pub fn start(&'static self, rx_chan: Receiver<Vec<String>>, tx_channels: Vec<Sender<Vec<String>>>) -> JoinHandle<()> {
+    pub fn start(&'static self, rx_chan: Receiver<Vec<String>>, tx_channels: Vec<Sender<Vec<String>>>) -> JoinHandle<(u8, String)> {
         debug!("Starting Serialize {}!", self.node_id);
         
         thread::spawn(move || {
@@ -115,7 +115,8 @@ impl SerializeOperator {
                     }
                 }
             }
-            
+
+            (0, String::new())
         })
     }
 }
