@@ -36,7 +36,7 @@ impl WriterSink {
         Box::leak(boxed)
     }
     
-    pub fn start (&'static self, rx_chan: Receiver<Vec<String>>) -> JoinHandle<()> {
+    pub fn start (&'static self, rx_chan: Receiver<Vec<String>>) -> JoinHandle<(u8, String)> {
         debug!("Starting WriterSink {}", self.node_id);
         
         let writer_clone = self.writer_mutex.clone();
@@ -50,6 +50,8 @@ impl WriterSink {
             }
             let mut out = writer_clone.lock().unwrap();
             out.flush().unwrap();
+
+            (0, String::new())
         })
     }
 }

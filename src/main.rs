@@ -61,6 +61,9 @@ fn main() {
     // Read the execution plan
     info!("Reading mapping plan...");
     let path_to_plan_serialisation = &args.mapping_file;
-    let json_plan = fs::read_to_string(path_to_plan_serialisation).unwrap();
-    start(&json_plan, args.force_std_out, args.force_to_file);
+    let json_plan = fs::read_to_string(path_to_plan_serialisation)
+        .expect(format!("Mapping file not found: {}", args.mapping_file).as_str());
+    if let Err(error) = start(&json_plan, args.force_std_out, args.force_to_file) {
+        eprintln!("{}", error);
+    }
 }
