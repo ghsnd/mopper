@@ -5,8 +5,8 @@
 A fast, lightweight data-to-RDF mapping tool.
 It executes an [AlgeMapLoom](https://github.com/s-minoo/algemaploom-rs/blob/main/README.md) mapping plan.
 
-This very early experimantal version takes a mapping plan file in JSON format
-as imput and generates RDF as N-Triples or N-Quads.
+This very early experimental version takes a mapping plan file in JSON format
+as input and generates RDF as N-Triples or N-Quads.
 
 ## Running
 
