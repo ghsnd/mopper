@@ -14,6 +14,10 @@
  *    limitations under the License.
  */
 
+#[macro_use]
+extern crate derive_builder;
+
+
 mod plan;
 
 mod source;
@@ -24,6 +28,9 @@ mod sink;
 mod plan_rewriter;
 mod join;
 pub mod error;
+pub mod mopper_options;
+#[cfg(test)]
+mod tests;
 
 
 use std::collections::HashMap;
@@ -31,6 +38,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io;
 use std::io::BufWriter;
+use std::path::{Path, PathBuf};
 use std::thread::JoinHandle;
 use crossbeam_channel::{bounded, Receiver, Sender};
 use log::{error, info};
@@ -39,6 +47,7 @@ use operator::formats::ReferenceFormulation;
 use crate::error::GeneralError;
 use crate::extension::ExtendOperator;
 use crate::join::JoinOperator;
+use crate::mopper_options::{MopperOptions, MopperOptionsBuilder};
 use crate::plan::PlanGraph;
 use crate::plan_rewriter::rewrite;
 use crate::serializer::SerializeOperator;
@@ -47,15 +56,21 @@ use crate::source::csv_file::CSVFileSource;
 
 type VecSender = Sender<Vec<String>>;
 type VecReceiver = Receiver<Vec<String>>;
+
+/// Start mopper with the default options
 pub fn start_default(algemaploom_plan: &str) -> Result<(), Box<dyn Error>> {
-    start(algemaploom_plan, false, None)
+    let options = MopperOptionsBuilder::default().build()?;
+    println!();
+    start(algemaploom_plan, &options)
 }
-pub fn start(algemaploom_plan: &str, force_std_out: bool, force_to_file: Option<String>) -> Result<(), Box<dyn Error>> {
+
+/// Start mopper with the given options
+pub fn start(algemaploom_plan: &str, options: &MopperOptions) -> Result<(), Box<dyn Error>> {
     // force_std_out takes precedence over force_to_file
     
     let plan_graph: PlanGraph = serde_json::from_str(algemaploom_plan).unwrap();
 
-    let to_one_target = force_std_out || force_to_file.is_some();
+    let to_one_target = options.force_to_std_out() || options.force_to_file().is_some();
     let reduced_plan = rewrite(&plan_graph, to_one_target);
 
     info!("Initializing execution engine...");
@@ -98,15 +113,24 @@ pub fn start(algemaploom_plan: &str, force_std_out: bool, force_to_file: Option<
             Operator::SourceOp { config } => {
                 match config.source_type {
                     IOType::File => {
-                        let file_path = config.config.get("path").unwrap();
-                        let reference_formulation = &config.root_iterator.reference_formulation;
-                        match reference_formulation {
-                            ReferenceFormulation::CSVRows => {
-                                let csv_file_source = CSVFileSource::new(file_path.to_string(), &node.attributes, id);
-                                let senders = sender_map.remove(id).unwrap();
-                                join_handles.push(csv_file_source.start(senders));
-                            },
-                            _ => {}
+                        let file_path_option = find_file(
+                            &config.config["path"],
+                            options.working_dir_hint()
+                        );
+                        if let Some(file_path) = file_path_option {
+                            let reference_formulation = &config.root_iterator.reference_formulation;
+                            match reference_formulation {
+                                ReferenceFormulation::CSVRows => {
+                                    let csv_file_source = CSVFileSource::new(file_path.to_str().unwrap().to_string(), &node.attributes, id);
+                                    let senders = sender_map.remove(id).unwrap();
+                                    join_handles.push(csv_file_source.start(senders));
+                                },
+                                _ => {}
+                            }
+                        } else {
+                            let msg = format!("File not found:  {}", &config.config["path"]);
+                            error!("{msg}");
+                            return Err(Box::new(GeneralError::from_msg(msg)));
                         }
                     }
                     _ => {}
@@ -135,11 +159,11 @@ pub fn start(algemaploom_plan: &str, force_std_out: bool, force_to_file: Option<
                 let receiver = receiver_map.remove(id).unwrap();
                 
                 // Forcing output to standard out or to file overrides the target settings
-                if force_std_out {
+                if options.force_to_std_out() {
                     let stdout = io::stdout();
                     let writer_sink = WriterSink::new(Box::new(stdout), id);
                     join_handles.push(writer_sink.start(receiver.clone())); // is this a good idea?
-                } else if let Some(file_path) = &force_to_file {
+                } else if let Some(file_path) = options.force_to_file() {
                     let file = File::create(file_path).unwrap();
                     let file_out = BufWriter::new(file);
                     let writer_sink = WriterSink::new(Box::new(file_out), id);
@@ -196,5 +220,26 @@ pub fn start(algemaploom_plan: &str, force_std_out: bool, force_to_file: Option<
         Err(Box::new(GeneralError::new(errors)))
     }
     
+    
+}
+
+fn find_file(file: &str, working_dir_hint: &Option<String>) -> Option<PathBuf> {
+    let file_path = Path::new(file);
+    
+    match file_path.exists() { 
+        true => Some(file_path.to_path_buf()),
+        false => {
+            if let Some(working_dir) = working_dir_hint {
+                let working_dir_path = Path::new(working_dir);
+                let new_path = working_dir_path.join(file);
+                match new_path.exists() { 
+                    true => Some(new_path),
+                    false => None
+                }
+            } else {
+                None
+            }
+        }
+    }
     
 }
