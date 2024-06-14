@@ -1,0 +1,11 @@
+digraph {
+    0 [ label = "{\"id\":\"Source_0\",\"operator\":{\"config\":{\"path\":\"student.csv\",\"root_iterator\":{\"alias\":null,\"fields\":[],\"reference\":null,\"reference_formulation\":\"CSVRows\"},\"source_type\":\"File\"},\"type\":\"SourceOp\"}}" ]
+    1 [ label = "{\"id\":\"Projection_1\",\"operator\":{\"config\":{\"projection_attributes\":[\"Name\"]},\"type\":\"ProjectOp\"}}" ]
+    2 [ label = "{\"id\":\"ExtendOp_2\",\"operator\":{\"config\":{\"?tm0_o0_0\":{\"dtype_function\":null,\"inner_function\":{\"type\":\"Reference\",\"value\":\"Name\"},\"langtype_function\":null,\"type\":\"Literal\"},\"?tm0_p0_0\":{\"inner_function\":{\"type\":\"Constant\",\"value\":\"http://xmlns.com/foaf/0.1/name\"},\"type\":\"Iri\"},\"?tm0_sm\":{\"inner_function\":{\"type\":\"TemplateString\",\"value\":\"http://example.com/{Name}\"},\"type\":\"Iri\"}},\"type\":\"ExtendOp\"}}" ]
+    3 [ label = "{\"id\":\"Serialize_3\",\"operator\":{\"config\":{\"format\":\"NQuads\",\"template\":\"?tm0_sm ?tm0_p0_0 ?tm0_o0_0 .\"},\"type\":\"SerializerOp\"}}" ]
+    4 [ label = "{\"id\":\"Sink_4\",\"operator\":{\"config\":{\"data_format\":\"NQuads\",\"target_type\":\"StdOut\"},\"type\":\"TargetOp\"}}" ]
+    0 -> 1 [ label = "{\"fragment\": default}" ]
+    1 -> 2 [ label = "{\"fragment\": default}" ]
+    2 -> 3 [ label = "{\"fragment\": default}" ]
+    3 -> 4 [ label = "{\"fragment\": default}" ]
+}

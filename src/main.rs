@@ -15,8 +15,10 @@
  */
 
 use std::fs;
+use std::path::PathBuf;
 use clap::Parser;
 use log::info;
+use mopper::mopper_options::MopperOptionsBuilder;
 use mopper::start;
 
 #[derive(Parser)]
@@ -63,7 +65,22 @@ fn main() {
     let path_to_plan_serialisation = &args.mapping_file;
     let json_plan = fs::read_to_string(path_to_plan_serialisation)
         .expect(format!("Mapping file not found: {}", args.mapping_file).as_str());
-    if let Err(error) = start(&json_plan, args.force_std_out, args.force_to_file) {
+    let plan_ser_path = PathBuf::from(path_to_plan_serialisation);
+    let mapping_parent_dir_option = plan_ser_path.parent();
+    
+    // set options
+    let mut options_builder = MopperOptionsBuilder::default();
+    if let Some(forced_output_file) = args.force_to_file {
+        options_builder.force_to_file(forced_output_file);
+    }
+    options_builder.force_to_std_out(args.force_std_out);
+    if let Some(mapping_parent_dir) = mapping_parent_dir_option {
+        //let boe = String::from(mapping_parent_dir.to_str().unwrap());
+        options_builder.working_dir_hint(mapping_parent_dir.to_str().unwrap());
+    }
+    let options = options_builder.build().unwrap();
+    
+    if let Err(error) = start(&json_plan, &options) {
         eprintln!("{}", error);
     }
 }

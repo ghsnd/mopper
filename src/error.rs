@@ -26,6 +26,10 @@ impl GeneralError {
     pub fn new(errors: Vec<(u8, String)>) -> Self {
         GeneralError {errors}
     }
+    
+    pub fn from_msg(message: String) -> Self {
+        Self::new(vec![(1, message)])
+    }
 }
 
 impl Display for GeneralError {
