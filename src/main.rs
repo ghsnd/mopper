@@ -45,7 +45,14 @@ struct Args {
     
     /// force output to file, ignoring the targets in the plan.
     #[arg(long, value_name = "FILE")]
-    force_to_file: Option<String>
+    force_to_file: Option<String>,
+
+    /// set the maximum number of messages each communication channel can hold before blocking the
+    /// sender thread.
+    /// `0` means no messages are hold: 'send' and 'receive' must happen at the same time.
+    /// The default is `128`.
+    #[arg(long, value_name = "N")]
+    message_buffer_capacity: Option<usize>
 }
 
 fn main() {
@@ -75,8 +82,13 @@ fn main() {
     }
     options_builder.force_to_std_out(args.force_std_out);
     if let Some(mapping_parent_dir) = mapping_parent_dir_option {
-        //let boe = String::from(mapping_parent_dir.to_str().unwrap());
-        options_builder.working_dir_hint(mapping_parent_dir.to_str().unwrap());
+        let parent_dir = mapping_parent_dir.to_str().unwrap();
+        if !parent_dir.is_empty() {
+            options_builder.working_dir_hint(parent_dir);
+        }
+    }
+    if let Some(buffer_capacity) = args.message_buffer_capacity {
+        options_builder.message_buffer_capacity(buffer_capacity);
     }
     let options = options_builder.build().unwrap();
     

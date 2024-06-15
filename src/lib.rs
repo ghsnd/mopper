@@ -66,10 +66,9 @@ pub fn start_default(algemaploom_plan: &str) -> Result<(), Box<dyn Error>> {
 
 /// Start mopper with the given options
 pub fn start(algemaploom_plan: &str, options: &MopperOptions) -> Result<(), Box<dyn Error>> {
-    // force_std_out takes precedence over force_to_file
-    
     let plan_graph: PlanGraph = serde_json::from_str(algemaploom_plan).unwrap();
 
+    // force_std_out takes precedence over force_to_file
     let to_one_target = options.force_to_std_out() || options.force_to_file().is_some();
     let reduced_plan = rewrite(&plan_graph, to_one_target);
 
@@ -85,7 +84,7 @@ pub fn start(algemaploom_plan: &str, options: &MopperOptions) -> Result<(), Box<
         // For now, the messages over channels are Vec<String>, where the first message contains the headers (keys)
         // and subsequent messages contain the values.
         if !node.from.is_empty() {
-            let (sender, receiver) = bounded::<Vec<String>>(128);
+            let (sender, receiver) = bounded::<Vec<String>>(options.message_buffer_capacity());
             receiver_map.insert(*id, receiver);
 
             // now find the "from" nodes and add this node id as "sender"
