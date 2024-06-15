@@ -22,13 +22,18 @@ pub struct MopperOptions {
     force_to_std_out: bool,
 
     /// Ignore sink configurations and force output to file. Overrides force_to_std_out.
-    #[builder(setter(into, strip_option))]
+    #[builder(setter(into, strip_option), default="None")]
     force_to_file: Option<String>,
-    
+
     /// Set the working directory virtually to this path.
     /// This is used by file sources to search for files relative to this path. 
-    #[builder(setter(into, strip_option))]
-    working_dir_hint: Option<String>
+    #[builder(setter(into, strip_option), default="None")]
+    working_dir_hint: Option<String>,
+
+    /// Set the maximum number of messages each communication channel can hold before blocking the
+    /// sender thread. `0` means no messages are hold: 'send' and 'receive' must happen at the same time .
+    #[builder(default="128")]
+    message_buffer_capacity: usize
 }
 
 impl MopperOptions {
@@ -40,5 +45,8 @@ impl MopperOptions {
     }
     pub fn working_dir_hint(&self) -> &Option<String> {
         &self.working_dir_hint
+    }
+    pub fn message_buffer_capacity(&self) -> usize {
+        self.message_buffer_capacity
     }
 }
