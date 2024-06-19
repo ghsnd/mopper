@@ -33,7 +33,12 @@ pub struct MopperOptions {
     /// Set the maximum number of messages each communication channel can hold before blocking the
     /// sender thread. `0` means no messages are hold: 'send' and 'receive' must happen at the same time .
     #[builder(default="128")]
-    message_buffer_capacity: usize
+    message_buffer_capacity: usize,
+
+    /// Remove duplicate triples or quads. Note that currently deduplication only works on a per-sink basis and
+    /// has a negative impact on speed and memory consumption.
+    #[builder(default="false", setter(strip_option))]
+    deduplicate: bool,
 }
 
 impl MopperOptions {
@@ -48,5 +53,8 @@ impl MopperOptions {
     }
     pub fn message_buffer_capacity(&self) -> usize {
         self.message_buffer_capacity
+    }
+    pub fn deduplicate(&self) -> bool {
+        self.deduplicate
     }
 }

@@ -1,12 +1,23 @@
 # mopper
 
+> I *hate* mappings!*
+
 ![](mopper.png)
 
-A fast, lightweight data-to-RDF mapping tool.
-It executes an [AlgeMapLoom](https://github.com/s-minoo/algemaploom-rs/blob/main/README.md) mapping plan.
+(*)*That's why mopper tries to do the job as quick as possible!*
+
+A fast and lightweight data-to-RDF mapping tool.
+It executes an [AlgeMapLoom](https://github.com/s-minoo/algemaploom-rs/blob/main/README.md) mapping plan which,
+in turn, can be generated from an [RML](https://rml.io/)
+or [ShExML](https://shexml.herminiogarcia.com/) mappings.
 
 This very early experimental version takes a mapping plan file in JSON format
 as input and generates RDF as N-Triples or N-Quads.
+Starting from an RML or ShExML mapping directly is on the roadmap.
+
+Conceptually every operator runs in its own thread, and data flow between
+them as a stream of messages (as a kind of simplified actor model).
+There is still plenty of room for optimizations though...
 
 ## Running
 
@@ -17,15 +28,17 @@ mopper -m my-mapping-file.json
 
 To check all options, run `mopper --help`
 ```
-UUsage: mopper [OPTIONS] --mapping-file <FILE>
+Usage: mopper [OPTIONS] --mapping-file <FILE>
 
 Options:
-  -m, --mapping-file <FILE>   the path to the AlgeMapLoom mapping plan (JSON)
-  -v, --verbose...            increase log level
-  -q, --quiet                 be quiet; no logging
-      --force-std-out         force output to standard out, ignoring the targets in the plan. Takes precedence over --force-to-file
-      --force-to-file <FILE>  force output to file, ignoring the targets in the plan
-  -h, --help                  Print help
+  -m, --mapping-file <FILE>          The path to the AlgeMapLoom mapping plan (JSON)
+  -v, --verbose...                   Increase log level
+  -q, --quiet                        Be quiet; no logging
+      --force-std-out                Force output to standard out, ignoring the targets in the plan. Takes precedence over --force-to-file
+      --force-to-file <FILE>         Force output to file, ignoring the targets in the plan
+      --message-buffer-capacity <N>  Set the maximum number of messages each communication channel can hold before blocking the sender thread. `0` means no messages are hold: 'send' and 'receive' must happen at the same time. The default is `128`
+  -d, --deduplicate                  Remove duplicate triples or quads. Note that currently deduplication only works on a per-sink basis and has a negative impact on speed and memory consumption
+  -h, --help                         Print help
 ```
 
 ## Building
@@ -72,9 +85,9 @@ Mapping features:
 - [x] Fragmenting
 - [x] Join operator (only inner join with `equals` condition)
 - [x] Blank node generation function
+- [x] Deduplication
 - [ ] Concatenate function
 - [ ] Replace function
 - [ ] To uppercase  / lowercase function
 - [ ] FnO function handling
 - [ ] Rename operator
-- [ ] Deduplication

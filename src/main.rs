@@ -27,32 +27,37 @@ struct Args {
     //#[options(help = "print help message")]
     //help: bool,
 
-    /// the path to the AlgeMapLoom mapping plan (JSON)
+    /// The path to the AlgeMapLoom mapping plan (JSON).
     #[arg(short, long, value_name = "FILE")]
     mapping_file: String,
     
-    /// increase log level
+    /// Increase log level.
     #[arg(short, long, action = clap::ArgAction::Count)]
     verbose: u8,
 
-    /// be quiet; no logging
+    /// Be quiet; no logging.
     #[arg(short, long)]
     quiet: bool,
     
-    /// force output to standard out, ignoring the targets in the plan. Takes precedence over --force-to-file
+    /// Force output to standard out, ignoring the targets in the plan. Takes precedence over --force-to-file.
     #[arg(long)]
     force_std_out: bool,
     
-    /// force output to file, ignoring the targets in the plan.
+    /// Force output to file, ignoring the targets in the plan.
     #[arg(long, value_name = "FILE")]
     force_to_file: Option<String>,
 
-    /// set the maximum number of messages each communication channel can hold before blocking the
+    /// Set the maximum number of messages each communication channel can hold before blocking the
     /// sender thread.
     /// `0` means no messages are hold: 'send' and 'receive' must happen at the same time.
     /// The default is `128`.
     #[arg(long, value_name = "N")]
-    message_buffer_capacity: Option<usize>
+    message_buffer_capacity: Option<usize>,
+
+    /// Remove duplicate triples or quads. Note that currently deduplication only works on a per-sink basis and
+    /// has a negative impact on speed and memory consumption.
+    #[arg(short, long)]
+    deduplicate: bool
 }
 
 fn main() {
@@ -80,7 +85,9 @@ fn main() {
     if let Some(forced_output_file) = args.force_to_file {
         options_builder.force_to_file(forced_output_file);
     }
-    options_builder.force_to_std_out(args.force_std_out);
+    options_builder
+        .force_to_std_out(args.force_std_out)
+        .deduplicate(args.deduplicate);
     if let Some(mapping_parent_dir) = mapping_parent_dir_option {
         let parent_dir = mapping_parent_dir.to_str().unwrap();
         if !parent_dir.is_empty() {
