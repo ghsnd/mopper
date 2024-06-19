@@ -160,12 +160,12 @@ pub fn start(algemaploom_plan: &str, options: &MopperOptions) -> Result<(), Box<
                 // Forcing output to standard out or to file overrides the target settings
                 if options.force_to_std_out() {
                     let stdout = io::stdout();
-                    let writer_sink = WriterSink::new(Box::new(stdout), id);
+                    let writer_sink = WriterSink::new(Box::new(stdout), id, options.deduplicate());
                     join_handles.push(writer_sink.start(receiver.clone())); // is this a good idea?
                 } else if let Some(file_path) = options.force_to_file() {
                     let file = File::create(file_path).unwrap();
                     let file_out = BufWriter::new(file);
-                    let writer_sink = WriterSink::new(Box::new(file_out), id);
+                    let writer_sink = WriterSink::new(Box::new(file_out), id, options.deduplicate());
                     join_handles.push(writer_sink.start(receiver.clone())); // is this a good idea?
                 } else {
 
@@ -173,7 +173,7 @@ pub fn start(algemaploom_plan: &str, options: &MopperOptions) -> Result<(), Box<
                     match config.target_type {
                         IOType::StdOut => {
                             let stdout = io::stdout();
-                            let writer_sink = WriterSink::new(Box::new(stdout), id);
+                            let writer_sink = WriterSink::new(Box::new(stdout), id, options.deduplicate());
                             join_handles.push(writer_sink.start(receiver));
                         },
                         _ => {
