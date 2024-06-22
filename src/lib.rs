@@ -21,14 +21,13 @@ extern crate derive_builder;
 mod plan;
 
 mod source;
-mod extension;
-mod basic_functions;
-mod serializer;
 mod sink;
 mod plan_rewriter;
-mod join;
 pub mod error;
 pub mod mopper_options;
+pub mod function;
+pub mod operator;
+
 #[cfg(test)]
 mod tests;
 
@@ -40,17 +39,17 @@ use std::io;
 use std::io::BufWriter;
 use std::path::{Path, PathBuf};
 use std::thread::JoinHandle;
+use ::operator::{Function, IOType, Operator};
+use ::operator::formats::ReferenceFormulation;
 use crossbeam_channel::{bounded, Receiver, Sender};
 use log::{error, info};
-use operator::{Function, IOType, Operator};
-use operator::formats::ReferenceFormulation;
 use crate::error::GeneralError;
-use crate::extension::ExtendOperator;
-use crate::join::JoinOperator;
 use crate::mopper_options::{MopperOptions, MopperOptionsBuilder};
+use crate::operator::extension::ExtendOperator;
+use crate::operator::join::JoinOperator;
+use crate::operator::serializer::SerializeOperator;
 use crate::plan::PlanGraph;
 use crate::plan_rewriter::rewrite;
-use crate::serializer::SerializeOperator;
 use crate::sink::writer_sink::WriterSink;
 use crate::source::csv_file::CSVFileSource;
 
@@ -139,7 +138,7 @@ pub fn start(algemaploom_plan: &str, options: &MopperOptions) -> Result<(), Box<
             // Create an Extension operator
             Operator::ExtendOp { config } => {
                 let extend_pairs: &HashMap<String, Function> = &config.extend_pairs;
-                let extend_operator = ExtendOperator::new(extend_pairs, id, &node.join_alias);
+                let extend_operator = ExtendOperator::new(extend_pairs, id, &node.join_alias)?;
                 let senders = sender_map.remove(id).unwrap();
                 let receiver = receiver_map.remove(id).unwrap();
                 join_handles.push(extend_operator.start(receiver, senders));
