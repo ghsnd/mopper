@@ -21,7 +21,14 @@ use std::thread::JoinHandle;
 use crossbeam_channel::{Receiver, Sender};
 use log::{debug, error};
 use operator::Function;
-use crate::basic_functions::{BasicFunction, BlankNodeFunction, ConstantFunction, IriFunction, LiteralFunction, ReferenceFunction, TemplateStrFunction};
+use crate::error::GeneralError;
+use crate::function::basic_function::BasicFunction;
+use crate::function::blank_node::BlankNodeFunction;
+use crate::function::constant::ConstantFunction;
+use crate::function::iri::IriFunction;
+use crate::function::literal::LiteralFunction;
+use crate::function::reference::ReferenceFunction;
+use crate::function::template_string::TemplateStrFunction;
 
 pub struct ExtendOperator {
     functions_mutex: Arc<Mutex<Vec<(String, Box<dyn BasicFunction + Send>)>>>,
@@ -30,18 +37,23 @@ pub struct ExtendOperator {
 }
 
 impl ExtendOperator {
-    pub fn new(extend_pairs: &HashMap<String, Function>, node_id: &usize, join_alias: &Option<String>) -> &'static Self {
+    pub fn new(extend_pairs: &HashMap<String, Function>, node_id: &usize, join_alias: &Option<String>) -> Result<&'static Self, GeneralError> {
         debug!("Initializing Extend operator {node_id}.");
-        let functions: Vec<(String, Box<dyn BasicFunction + Send>)> = extend_pairs.iter()
-            .map(|(name, function)| {
-                (name.to_string(), get_function(function))
-            }).collect();
+
+        let mut functions: Vec<(String, Box<dyn BasicFunction + Send>)> = Vec::new();
+        
+        extend_pairs.iter().try_for_each(|(name, function_description)| {
+            let function = get_function(function_description)?;
+            functions.push((name.clone(), function));
+            Ok(())
+        })?;
+        
         let boxed = Box::new(ExtendOperator{
             functions_mutex: Arc::new(Mutex::new(functions)),
             node_id: node_id.to_string(),
             join_alias: join_alias.clone()
         });
-        Box::leak(boxed)
+        Ok(Box::leak(boxed))
     }
 
     pub fn start(&'static self, rx_chan: Receiver<Vec<String>>, tx_channels: Vec<Sender<Vec<String>>>) -> JoinHandle<(u8, String)> {
@@ -135,11 +147,11 @@ impl ExtendOperator {
     }
 }
 
-fn get_function(function: &Function) -> Box<dyn BasicFunction + Send> {
+fn get_function(function: &Function) -> Result<Box<dyn BasicFunction + Send>, GeneralError> {
     match function {
         Function::Constant { value } => {
             debug!(" function 'Constant': [{value}]");
-            Box::new(ConstantFunction::new(value.clone()))
+            Ok(Box::new(ConstantFunction::new(value.clone())))
         },
         Function::UriEncode { inner_function } => {
             debug!(" function 'UriEncode'. Ignoring bc of issue in AlgeMapLoom where it occurs at the wrong place (it's handled in template processing now). Just passing through the inner function.");
@@ -147,12 +159,13 @@ fn get_function(function: &Function) -> Box<dyn BasicFunction + Send> {
         },
         Function::Iri { inner_function } => {
             debug!(" function 'Iri'");
-            let inner = get_function(inner_function);
-            Box::new(IriFunction::new(inner))
+            let inner = get_function(inner_function)?;
+            Ok(Box::new(IriFunction::new(inner)))
         },
         Function::TemplateString { value } => {
             debug!(" function 'TemplateString': [{value}]");
-            Box::new(TemplateStrFunction::new(value))
+            let function = TemplateStrFunction::new(value)?;
+            Ok(Box::new(function))
         },
         Function::TemplateFunctionValue { .. } => {
             error!(" function 'TemplateFunctionValue' not implemented yet.");
@@ -160,8 +173,8 @@ fn get_function(function: &Function) -> Box<dyn BasicFunction + Send> {
         },
         Function::BlankNode { inner_function } => {
             debug!(" function 'BlankNode'");
-            let inner = get_function(inner_function);
-            Box::new(BlankNodeFunction::new(inner))
+            let inner = get_function(inner_function)?;
+            Ok(Box::new(BlankNodeFunction::new(inner)))
         },
         Function::Concatenate { .. } => {
             error!(" function 'Concatenate' not implemented yet.");
@@ -173,8 +186,8 @@ fn get_function(function: &Function) -> Box<dyn BasicFunction + Send> {
         },
         Function::Literal { inner_function, .. } => {
             debug!(" function 'Literal'");
-            let inner = get_function(inner_function);
-            Box::new(LiteralFunction::new(inner))
+            let inner = get_function(inner_function)?;
+            Ok(Box::new(LiteralFunction::new(inner)))
         },
         Function::Lower { .. } => {
             error!(" function 'Lower' not implemented yet.");
@@ -186,7 +199,7 @@ fn get_function(function: &Function) -> Box<dyn BasicFunction + Send> {
         },
         Function::Reference { value } => {
             debug!(" function 'Reference': [{value}]");
-            Box::new(ReferenceFunction::new(value.to_string()))
+            Ok(Box::new(ReferenceFunction::new(value.to_string())))
         },
         Function::Replace { .. } => {
             error!(" function 'Relace' not implemented yet.");
