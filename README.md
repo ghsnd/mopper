@@ -4,16 +4,16 @@
 
 ![](mopper.png)
 
-(*)*That's why mopper tries to do the job as quick as possible!*
+(*)*That's why mopper tries to do the job as fast as possible!*
 
 A fast and lightweight data-to-RDF mapping tool.
 It executes an [AlgeMapLoom](https://github.com/s-minoo/algemaploom-rs/blob/main/README.md) mapping plan which,
-in turn, can be generated from an [RML](https://rml.io/)
+in turn, can be generated from [RML](https://rml.io/)
 or [ShExML](https://shexml.herminiogarcia.com/) mappings.
 
 This very early experimental version takes a mapping plan file in JSON format
 as input and generates RDF as N-Triples or N-Quads.
-Starting from an RML or ShExML mapping directly is on the roadmap.
+Starting from an RML or ShExML mapping is on the roadmap.
 
 Conceptually every operator runs in its own thread, and data flow between
 them as a stream of messages (as a kind of simplified actor model).
