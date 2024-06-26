@@ -44,8 +44,10 @@ impl SerializeOperator {
     
     pub fn start(&'static self, rx_chan: Receiver<Vec<String>>, tx_channels: Vec<Sender<Vec<String>>>) -> JoinHandle<(u8, String)> {
         debug!("Starting Serialize {}!", self.node_id);
-        
-        thread::spawn(move || {
+
+        thread::Builder::new()
+            .name(format!("Serializer {}", self.node_id))
+            .spawn(move || {
             
             // Get the variable names ("headers") in the order they will arrive
             let mut iter = rx_chan.iter();
@@ -117,7 +119,7 @@ impl SerializeOperator {
             }
 
             (0, String::new())
-        })
+        }).unwrap()
     }
 }
 

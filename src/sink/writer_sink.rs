@@ -43,8 +43,10 @@ impl WriterSink {
         debug!("Starting WriterSink {}", self.node_id);
         
         let writer_clone = self.writer_mutex.clone();
-        
-        thread::spawn(move || {
+
+        thread::Builder::new()
+            .name(format!("WriterSink {}", self.node_id))
+            .spawn(move || {
             let mut dedup_filter: Option<HashSet<String>> = match self.deduplicate {
                 // At this moment deduplication is simply done with a HashMap.
                 // Could be replaced with a more memory-efficient (or memory mapped) data structure.
@@ -67,6 +69,6 @@ impl WriterSink {
             out.flush().unwrap();
 
             (0, String::new())
-        })
+        }).unwrap()
     }
 }

@@ -55,8 +55,10 @@ impl JoinOperator {
     
     pub fn start(&'static self, rx_chan: Receiver<Vec<String>>, tx_channels: Vec<Sender<Vec<String>>>) -> JoinHandle<(u8, String)>{
         debug!("Starting Join operator {}!", self.node_id);
-        
-        thread::spawn(move || {
+
+        thread::Builder::new()
+            .name(format!("Join {}", self.node_id))
+            .spawn(move || {
             let mut left_attribute_names: Vec<String> = Vec::with_capacity(self.left_right_join_attr_pairs.len());
             let mut right_attribute_names: Vec<String> = Vec::with_capacity(self.left_right_join_attr_pairs.len());
 
@@ -166,7 +168,7 @@ impl JoinOperator {
 
             (0, String::new())
             
-        })
+        }).unwrap()
     }
 }
 

@@ -60,8 +60,9 @@ impl ExtendOperator {
         debug!("Starting ExtendOperator {}!", self.node_id);
 
         let functions_clone = self.functions_mutex.clone();
-        
-        thread::spawn(move || {
+        thread::Builder::new()
+            .name(format!("Extend {}", self.node_id))
+            .spawn(move || {
             let mut functions = functions_clone.lock().unwrap();
             
             // first send headers
@@ -143,7 +144,7 @@ impl ExtendOperator {
 
             (0, String::new())
             
-        })
+        }).unwrap()
     }
 }
 
