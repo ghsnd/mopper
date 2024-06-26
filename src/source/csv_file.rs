@@ -50,7 +50,9 @@ impl CSVFileSource {
     }
 
     pub fn start(&'static self, tx_channels: Vec<Sender<Vec<String>>>) -> JoinHandle<(u8, String)> {
-        thread::spawn(move || {
+        thread::Builder::new()
+            .name(format!("CSVFileSource {}", self.node_id))
+            .spawn(move || {
             debug!("Starting CSVFileSource!");
                         
             let file_res = File::open(self.file_path.clone());
@@ -109,6 +111,6 @@ impl CSVFileSource {
             }
 
             (0, String::new())
-        })
+        }).unwrap()
     }
 }
