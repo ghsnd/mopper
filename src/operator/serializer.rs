@@ -139,7 +139,7 @@ fn create_template_template_string_parts(template: &str) -> Vec<(bool, String)> 
                     is_variable_name = true;
                 }
             },
-            ' ' => {
+            ' ' | '^' => {
                 if is_variable_name {
                     if !current_str.is_empty() {
                         template_string_parts.push((true, current_str.to_string()));
@@ -147,7 +147,7 @@ fn create_template_template_string_parts(template: &str) -> Vec<(bool, String)> 
                     }
                     is_variable_name = false;
                 }
-                current_str.push(' ');
+                current_str.push(c);
             }
             _ => {
                 current_str.push(c);
