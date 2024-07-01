@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use std::thread;
 use std::thread::JoinHandle;
 use crossbeam_channel::{Receiver, Sender};
-use log::{debug, error};
+use log::{debug, error, trace};
 use operator::Join;
 use operator::JoinType::InnerJoin;
 
@@ -71,7 +71,7 @@ impl JoinOperator {
             
             for data in rx_chan.iter() {
                 let node_id = &data[0];
-                debug!("Processing join data of node {node_id}");
+                trace!("Processing join data of node {node_id}");
                 let real_data = &data[1..];
                 
                 if node_id.eq(&self.left_node_id) {

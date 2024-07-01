@@ -32,8 +32,7 @@ use crate::function::template_string::TemplateStrFunction;
 
 pub struct ExtendOperator {
     functions_mutex: Arc<Mutex<Vec<(String, Box<dyn BasicFunction + Send>)>>>,
-    node_id: String,
-    join_alias: Option<String>
+    node_id: String
 }
 
 impl ExtendOperator {
@@ -43,7 +42,7 @@ impl ExtendOperator {
         let mut functions: Vec<(String, Box<dyn BasicFunction + Send>)> = Vec::new();
         
         extend_pairs.iter().try_for_each(|(name, function_description)| {
-            let function = get_function(function_description)?;
+            let function = get_function(function_description, join_alias)?;
             functions.push((name.clone(), function));
             Ok(())
         })?;
@@ -51,7 +50,6 @@ impl ExtendOperator {
         let boxed = Box::new(ExtendOperator{
             functions_mutex: Arc::new(Mutex::new(functions)),
             node_id: node_id.to_string(),
-            join_alias: join_alias.clone()
         });
         Ok(Box::leak(boxed))
     }
@@ -62,93 +60,62 @@ impl ExtendOperator {
         let functions_clone = self.functions_mutex.clone();
         thread::Builder::new()
             .name(format!("Extend {}", self.node_id))
-            .spawn(move || {
-            let mut functions = functions_clone.lock().unwrap();
-            
-            // first send headers
-            let mut node_id_plus_function_names = vec![self.node_id.clone()];
-            node_id_plus_function_names.extend(functions.iter()
-                .map(|(name, _function)| {
-                    let minus_first_char = &name[1..];
-                    minus_first_char.to_string()
-                })
-            );
-            tx_channels.iter()
-                .for_each(|tx_chan| tx_chan.send(node_id_plus_function_names.clone()).unwrap());
-            
-            // then send result types, so the serializer knows what to do with the string values
-            let mut node_id_plus_result_types = vec![self.node_id.clone()];
-            node_id_plus_result_types.extend(functions.iter()
-                .map(|(_name, function)| {
-                    function.get_result_type().to_string()
-                })
-            );
-            tx_channels.iter()
-                .for_each(|tx_chan| tx_chan.send(node_id_plus_result_types.clone()).unwrap());
-            
-            // now process values
-            // Set the variable names ("headers") for the functions first
-            let mut iter = rx_chan.iter();
-            let variable_names_option = iter.next();
-            if variable_names_option.is_some() {
-                let variable_names = variable_names_option.unwrap();
-                
-                // Now here comes a hack to address removed self-joins:
-                // the variable names are duplicated, but the join alias is prepended.
-                // That way the functions keep on working if they expect variable names that would
-                // be used by the join function
-                if let Some(join_alias) = &self.join_alias {
-                    let copy_of_variable_names_with_prefix= variable_names.iter()
-                        .map(|name| {
-                            let mut new_variable_name = join_alias.clone();
-                            new_variable_name.push('_');
-                            new_variable_name.push_str(name);
-                            new_variable_name
-                        });
-                        //.collect();
-                    let new_variable_names: Vec<String> = variable_names.iter()
-                        .cloned()
-                        .chain(copy_of_variable_names_with_prefix)
-                        .collect();
+            .spawn(move ||
+            {
+                let mut functions = functions_clone.lock().unwrap();
 
-                    functions.iter_mut().for_each(|(_name, function)| {
-                        function.variable_names(new_variable_names.clone());
-                    });
-                    
-                } else {
+                // first send headers
+                let mut node_id_plus_function_names = vec![self.node_id.clone()];
+                node_id_plus_function_names.extend(functions.iter()
+                    .map(|(name, _function)| {
+                        let minus_first_char = &name[1..];
+                        minus_first_char.to_string()
+                    })
+                );
+                tx_channels.iter()
+                    .for_each(|tx_chan| tx_chan.send(node_id_plus_function_names.clone()).unwrap());
+
+                // then send result types, so the serializer knows what to do with the string values
+                let mut node_id_plus_result_types = vec![self.node_id.clone()];
+                node_id_plus_result_types.extend(functions.iter()
+                    .map(|(_name, function)| {
+                        function.get_result_type().to_string()
+                    })
+                );
+                tx_channels.iter()
+                    .for_each(|tx_chan| tx_chan.send(node_id_plus_result_types.clone()).unwrap());
+
+                // now process values
+                // Set the variable names ("headers") for the functions first
+                let mut iter = rx_chan.iter();
+                let variable_names_option = iter.next();
+                if let Some(variable_names) = variable_names_option {
                     functions.iter_mut().for_each(|(_name, function)| {
                         function.variable_names(variable_names.clone());
                     });
                 }
-            }
-            
-            // Let each function process the data
-            for data in iter {
-                
-                let data_to_process = match self.join_alias {
-                    Some(_) => data.iter().chain(data.iter()).cloned().collect(), // is this a performant way to append a vec to itself?
-                    None => data
-                };
-                
-                // prepend node id
-                let mut node_id_plus_result = vec![self.node_id.clone()];
-                node_id_plus_result.extend(
-                    functions.iter()
-                        .map(|(_name, function)| { function.exec(&data_to_process) })
-                        .flatten()
-                );
 
-                tx_channels.iter()
-                    .for_each(|tx_chan| tx_chan.send(node_id_plus_result.clone()).unwrap());
-            }
+                // Let each function process the data
+                for data in iter {
 
-            (0, String::new())
-            
-        }).unwrap()
+                    // prepend node id
+                    let mut node_id_plus_result = vec![self.node_id.clone()];
+                    node_id_plus_result.extend(
+                        functions.iter()
+                            .map(|(_name, function)| { function.exec(&data) })
+                            .flatten()
+                    );
+
+                    tx_channels.iter()
+                        .for_each(|tx_chan| tx_chan.send(node_id_plus_result.clone()).unwrap());
+                }
+
+                (0, String::new())
+            }).unwrap()
     }
 }
 
-fn get_function(function: &Function) -> Result<Box<dyn BasicFunction + Send>, GeneralError> {
+fn get_function(function: &Function, join_alias: &Option<String>) -> Result<Box<dyn BasicFunction + Send>, GeneralError> {
     match function {
         Function::Constant { value } => {
             debug!(" function 'Constant': [{value}]");
@@ -156,16 +123,16 @@ fn get_function(function: &Function) -> Result<Box<dyn BasicFunction + Send>, Ge
         },
         Function::UriEncode { inner_function } => {
             debug!(" function 'UriEncode'. Ignoring bc of issue in AlgeMapLoom where it occurs at the wrong place (it's handled in template processing now). Just passing through the inner function.");
-            get_function(inner_function)
+            get_function(inner_function, join_alias)
         },
         Function::Iri { inner_function } => {
             debug!(" function 'Iri'");
-            let inner = get_function(inner_function)?;
+            let inner = get_function(inner_function, join_alias)?;
             Ok(Box::new(IriFunction::new(inner)))
         },
         Function::TemplateString { value } => {
             debug!(" function 'TemplateString': [{value}]");
-            let function = TemplateStrFunction::new(value)?;
+            let function = TemplateStrFunction::new(value, join_alias)?;
             Ok(Box::new(function))
         },
         Function::TemplateFunctionValue { .. } => {
@@ -174,7 +141,7 @@ fn get_function(function: &Function) -> Result<Box<dyn BasicFunction + Send>, Ge
         },
         Function::BlankNode { inner_function } => {
             debug!(" function 'BlankNode'");
-            let inner = get_function(inner_function)?;
+            let inner = get_function(inner_function, join_alias)?;
             Ok(Box::new(BlankNodeFunction::new(inner)))
         },
         Function::Concatenate { .. } => {
@@ -187,7 +154,7 @@ fn get_function(function: &Function) -> Result<Box<dyn BasicFunction + Send>, Ge
         },
         Function::Literal { inner_function, .. } => {
             debug!(" function 'Literal'");
-            let inner = get_function(inner_function)?;
+            let inner = get_function(inner_function, join_alias)?;
             Ok(Box::new(LiteralFunction::new(inner)))
         },
         Function::Lower { .. } => {
