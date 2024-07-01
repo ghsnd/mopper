@@ -27,9 +27,9 @@ pub struct TemplateStrFunction {
 }
 
 impl TemplateStrFunction {
-    pub fn new(template: &str) -> Result<Self, GeneralError> {
+    pub fn new(template: &str, join_alias: &Option<String>) -> Result<Self, GeneralError> {
         Ok(TemplateStrFunction{
-            template_string_parts: parse_template(template)?,
+            template_string_parts: parse_template(template, join_alias)?,
             variable_names: Vec::with_capacity(1)
         })
     }
@@ -62,7 +62,7 @@ impl BasicFunction for TemplateStrFunction {
     }
 }
 
-fn parse_template(template: &str) -> Result<Vec<(bool, String)>, GeneralError> {
+fn parse_template(template: &str, join_alias: &Option<String>) -> Result<Vec<(bool, String)>, GeneralError> {
     let mut template_string_parts: Vec<(bool, String)> = Vec::with_capacity(2);
     let mut current_str = String::new();
     let mut between_cb = false;
@@ -94,7 +94,17 @@ fn parse_template(template: &str) -> Result<Vec<(bool, String)>, GeneralError> {
                 } else {
                     if between_cb {
                         if !current_str.is_empty() {
-                            template_string_parts.push((true, current_str.to_string()));
+                            let template_var_name = match join_alias {
+                                Some(alias) => {
+                                    if current_str.starts_with(alias) {
+                                        current_str[alias.len() + 1..].to_string()
+                                    } else {
+                                        current_str.to_string()
+                                    }
+                                },
+                                None => current_str.to_string()
+                            };
+                            template_string_parts.push((true, template_var_name));
                             current_str.clear();
                         }
                         between_cb = false;
@@ -148,7 +158,7 @@ mod tests {
 
     #[test]
     fn normal_template() {
-        let result = parse_template("Hello {world}!").unwrap();
+        let result = parse_template("Hello {world}!", &None).unwrap();
         let expected = vec![
             (false, "Hello ".to_string()),
             (true,  "world".to_string()),
@@ -159,7 +169,7 @@ mod tests {
 
     #[test]
     fn no_template_var() {
-        let result = parse_template("Hello world!").unwrap();
+        let result = parse_template("Hello world!", &None).unwrap();
         let expected = vec![
             (false, "Hello world!".to_string()),
         ];
@@ -168,7 +178,7 @@ mod tests {
 
     #[test]
     fn two_template_vars() {
-        let result = parse_template("{Hello}{world}!").unwrap();
+        let result = parse_template("{Hello}{world}!", &None).unwrap();
         let expected = vec![
             (true,  "Hello".to_string()),
             (true,  "world".to_string()),
@@ -179,14 +189,14 @@ mod tests {
 
     #[test]
     fn template_var_at_end() {
-        let result = parse_template("{a}").unwrap();
+        let result = parse_template("{a}", &None).unwrap();
         let expected = vec![(true,  "a".to_string())];
         assert_eq!(expected, result);
     }
 
     #[test]
     fn escaped_template() {
-        let result = parse_template("Hello \\{world\\}!").unwrap();
+        let result = parse_template("Hello \\{world\\}!", &None).unwrap();
         let expected = vec![
             (false, "Hello {world}!".to_string()),
         ];
@@ -195,25 +205,25 @@ mod tests {
 
     #[test]
     fn nested_template_var() {
-        let result = parse_template("Hello {{world}}!");
+        let result = parse_template("Hello {{world}}!", &None);
         assert!(result.is_err());
     }
 
     #[test]
     fn wrong_character_escaped() {
-        let result = parse_template("Hello w\\orld!");
+        let result = parse_template("Hello w\\orld!", &None);
         assert!(result.is_err());
     }
 
     #[test]
     fn unclosed_template_var() {
-        let result = parse_template("Hello {world!");
+        let result = parse_template("Hello {world!", &None);
         assert!(result.is_err());
     }
 
     #[test]
     fn empty_template_var() {
-        let result = parse_template("Hello {}!").unwrap();
+        let result = parse_template("Hello {}!", &None).unwrap();
         let expected = vec![
             (false, "Hello ".to_string()),
             (false, "!".to_string()),
@@ -223,7 +233,7 @@ mod tests {
 
     #[test]
     fn empty_template() {
-        let result = parse_template("").unwrap();
+        let result = parse_template("", &None).unwrap();
         let expected: Vec<(bool, String)> = Vec::new();
         assert_eq!(expected, result);
     }
