@@ -23,14 +23,14 @@ pub struct UriEncodeFunction {
 
 impl UriEncodeFunction {
     // Not used at the moment...
-    pub fn _new(inner_function: Box<dyn BasicFunction + Send>) -> Self {
+    pub fn new(inner_function: Box<dyn BasicFunction + Send>) -> Self {
         UriEncodeFunction {inner_function}
     }
 }
 
 impl BasicFunction for UriEncodeFunction {
 
-    fn variable_names(&mut self, variable_names: Vec<String>) {
+    fn variable_names(&mut self, variable_names: &[String]) {
         self.inner_function.variable_names(variable_names);
     }
     fn exec(&self, input: &[String]) -> Vec<String> {

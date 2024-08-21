@@ -1,0 +1,584 @@
+{
+  "nodes": [
+    {
+      "id": "Source_0",
+      "operator": {
+        "type": "SourceOp",
+        "config": {
+          "path": "data.csv",
+          "source_type": "File",
+          "root_iterator": {
+            "reference": null,
+            "reference_formulation": "CSVRows",
+            "fields": [],
+            "alias": null
+          }
+        }
+      }
+    },
+    {
+      "id": "Projection_1",
+      "operator": {
+        "type": "ProjectOp",
+        "config": {
+          "projection_attributes": [
+            "p1",
+            "p3",
+            "p2",
+            "p5",
+            "p4"
+          ]
+        }
+      }
+    },
+    {
+      "id": "Source_2",
+      "operator": {
+        "type": "SourceOp",
+        "config": {
+          "path": "data.csv",
+          "source_type": "File",
+          "root_iterator": {
+            "reference": null,
+            "reference_formulation": "CSVRows",
+            "fields": [],
+            "alias": null
+          }
+        }
+      }
+    },
+    {
+      "id": "Projection_3",
+      "operator": {
+        "type": "ProjectOp",
+        "config": {
+          "projection_attributes": [
+            "p4",
+            "p1",
+            "p2",
+            "p3",
+            "p5"
+          ]
+        }
+      }
+    },
+    {
+      "id": "Source_4",
+      "operator": {
+        "type": "SourceOp",
+        "config": {
+          "path": "data.csv",
+          "source_type": "File",
+          "root_iterator": {
+            "reference": null,
+            "reference_formulation": "CSVRows",
+            "fields": [],
+            "alias": null
+          }
+        }
+      }
+    },
+    {
+      "id": "Projection_5",
+      "operator": {
+        "type": "ProjectOp",
+        "config": {
+          "projection_attributes": [
+            "p5",
+            "p4",
+            "p1",
+            "p2",
+            "p3"
+          ]
+        }
+      }
+    },
+    {
+      "id": "ExtendOp_6",
+      "operator": {
+        "type": "ExtendOp",
+        "config": {
+          "?tm0_p3_0": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "Constant",
+                "value": "http://example.com/p1"
+              }
+            }
+          },
+          "?tm0_p1_0": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "Constant",
+                "value": "http://example.com/p4"
+              }
+            }
+          },
+          "?tm0_o1_0": {
+            "type": "Literal",
+            "inner_function": {
+              "type": "Reference",
+              "value": "p4"
+            },
+            "dtype_function": null,
+            "langtype_function": null
+          },
+          "?tm0_o0_0": {
+            "type": "Literal",
+            "inner_function": {
+              "type": "Reference",
+              "value": "p5"
+            },
+            "dtype_function": null,
+            "langtype_function": null
+          },
+          "?tm0_p0_0": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "Constant",
+                "value": "http://example.com/p5"
+              }
+            }
+          },
+          "?tm0_o3_0": {
+            "type": "Literal",
+            "inner_function": {
+              "type": "Reference",
+              "value": "p1"
+            },
+            "dtype_function": null,
+            "langtype_function": null
+          },
+          "?tm0_o2_0": {
+            "type": "Literal",
+            "inner_function": {
+              "type": "Reference",
+              "value": "p2"
+            },
+            "dtype_function": null,
+            "langtype_function": null
+          },
+          "?tm0_o4_0": {
+            "type": "Literal",
+            "inner_function": {
+              "type": "Reference",
+              "value": "p3"
+            },
+            "dtype_function": null,
+            "langtype_function": null
+          },
+          "?tm0_p2_0": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "Constant",
+                "value": "http://example.com/p2"
+              }
+            }
+          },
+          "?tm0_p4_0": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "Constant",
+                "value": "http://example.com/p3"
+              }
+            }
+          },
+          "?tm0_sm": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "TemplateString",
+                "value": "http://ex.com/table/{p2}"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "Serialize_7",
+      "operator": {
+        "type": "SerializerOp",
+        "config": {
+          "template": "?tm0_sm ?tm0_p0_0 ?tm0_o0_0 .\n?tm0_sm ?tm0_p1_0 ?tm0_o1_0 .\n?tm0_sm ?tm0_p2_0 ?tm0_o2_0 .\n?tm0_sm ?tm0_p3_0 ?tm0_o3_0 .\n?tm0_sm ?tm0_p4_0 ?tm0_o4_0 .",
+          "format": "NQuads"
+        }
+      }
+    },
+    {
+      "id": "Sink_8",
+      "operator": {
+        "type": "TargetOp",
+        "config": {
+          "target_type": "StdOut",
+          "data_format": "NQuads"
+        }
+      }
+    },
+    {
+      "id": "ExtendOp_9",
+      "operator": {
+        "type": "ExtendOp",
+        "config": {
+          "?tm1_p1_0": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "Constant",
+                "value": "http://example.com/p5"
+              }
+            }
+          },
+          "?tm1_p2_0": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "Constant",
+                "value": "http://example.com/p2"
+              }
+            }
+          },
+          "?tm1_o0_0": {
+            "type": "Literal",
+            "inner_function": {
+              "type": "Reference",
+              "value": "p4"
+            },
+            "dtype_function": null,
+            "langtype_function": null
+          },
+          "?tm1_o1_0": {
+            "type": "Literal",
+            "inner_function": {
+              "type": "Reference",
+              "value": "p5"
+            },
+            "dtype_function": null,
+            "langtype_function": null
+          },
+          "?tm1_o2_0": {
+            "type": "Literal",
+            "inner_function": {
+              "type": "Reference",
+              "value": "p2"
+            },
+            "dtype_function": null,
+            "langtype_function": null
+          },
+          "?tm1_p3_0": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "Constant",
+                "value": "http://example.com/p3"
+              }
+            }
+          },
+          "?tm1_sm": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "TemplateString",
+                "value": "http://ex.com/table/{p1}"
+              }
+            }
+          },
+          "?tm1_o4_0": {
+            "type": "Literal",
+            "inner_function": {
+              "type": "Reference",
+              "value": "p1"
+            },
+            "dtype_function": null,
+            "langtype_function": null
+          },
+          "?tm1_p0_0": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "Constant",
+                "value": "http://example.com/p4"
+              }
+            }
+          },
+          "?tm1_o3_0": {
+            "type": "Literal",
+            "inner_function": {
+              "type": "Reference",
+              "value": "p3"
+            },
+            "dtype_function": null,
+            "langtype_function": null
+          },
+          "?tm1_p4_0": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "Constant",
+                "value": "http://example.com/p1"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "Serialize_10",
+      "operator": {
+        "type": "SerializerOp",
+        "config": {
+          "template": "?tm1_sm ?tm1_p0_0 ?tm1_o0_0 .\n?tm1_sm ?tm1_p1_0 ?tm1_o1_0 .\n?tm1_sm ?tm1_p2_0 ?tm1_o2_0 .\n?tm1_sm ?tm1_p3_0 ?tm1_o3_0 .\n?tm1_sm ?tm1_p4_0 ?tm1_o4_0 .",
+          "format": "NQuads"
+        }
+      }
+    },
+    {
+      "id": "Sink_11",
+      "operator": {
+        "type": "TargetOp",
+        "config": {
+          "target_type": "StdOut",
+          "data_format": "NQuads"
+        }
+      }
+    },
+    {
+      "id": "ExtendOp_12",
+      "operator": {
+        "type": "ExtendOp",
+        "config": {
+          "?tm2_o0_0": {
+            "type": "Literal",
+            "inner_function": {
+              "type": "Reference",
+              "value": "p2"
+            },
+            "dtype_function": null,
+            "langtype_function": null
+          },
+          "?tm2_o4_0": {
+            "type": "Literal",
+            "inner_function": {
+              "type": "Reference",
+              "value": "p1"
+            },
+            "dtype_function": null,
+            "langtype_function": null
+          },
+          "?tm2_o3_0": {
+            "type": "Literal",
+            "inner_function": {
+              "type": "Reference",
+              "value": "p4"
+            },
+            "dtype_function": null,
+            "langtype_function": null
+          },
+          "?tm2_sm": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "TemplateString",
+                "value": "http://ex.com/table/{p3}"
+              }
+            }
+          },
+          "?tm2_p3_0": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "Constant",
+                "value": "http://example.com/p4"
+              }
+            }
+          },
+          "?tm2_p0_0": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "Constant",
+                "value": "http://example.com/p2"
+              }
+            }
+          },
+          "?tm2_o2_0": {
+            "type": "Literal",
+            "inner_function": {
+              "type": "Reference",
+              "value": "p3"
+            },
+            "dtype_function": null,
+            "langtype_function": null
+          },
+          "?tm2_o1_0": {
+            "type": "Literal",
+            "inner_function": {
+              "type": "Reference",
+              "value": "p5"
+            },
+            "dtype_function": null,
+            "langtype_function": null
+          },
+          "?tm2_p1_0": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "Constant",
+                "value": "http://example.com/p5"
+              }
+            }
+          },
+          "?tm2_p4_0": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "Constant",
+                "value": "http://example.com/p1"
+              }
+            }
+          },
+          "?tm2_p2_0": {
+            "type": "Iri",
+            "inner_function": {
+              "type": "UriEncode",
+              "inner_function": {
+                "type": "Constant",
+                "value": "http://example.com/p3"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "Serialize_13",
+      "operator": {
+        "type": "SerializerOp",
+        "config": {
+          "template": "?tm2_sm ?tm2_p0_0 ?tm2_o0_0 .\n?tm2_sm ?tm2_p1_0 ?tm2_o1_0 .\n?tm2_sm ?tm2_p2_0 ?tm2_o2_0 .\n?tm2_sm ?tm2_p3_0 ?tm2_o3_0 .\n?tm2_sm ?tm2_p4_0 ?tm2_o4_0 .",
+          "format": "NQuads"
+        }
+      }
+    },
+    {
+      "id": "Sink_14",
+      "operator": {
+        "type": "TargetOp",
+        "config": {
+          "target_type": "StdOut",
+          "data_format": "NQuads"
+        }
+      }
+    }
+  ],
+  "node_holes": [],
+  "edge_property": "directed",
+  "edges": [
+    [
+      0,
+      1,
+      {
+        "fragment": "default"
+      }
+    ],
+    [
+      2,
+      3,
+      {
+        "fragment": "default"
+      }
+    ],
+    [
+      4,
+      5,
+      {
+        "fragment": "default"
+      }
+    ],
+    [
+      1,
+      6,
+      {
+        "fragment": "default"
+      }
+    ],
+    [
+      6,
+      7,
+      {
+        "fragment": "default"
+      }
+    ],
+    [
+      7,
+      8,
+      {
+        "fragment": "default"
+      }
+    ],
+    [
+      3,
+      9,
+      {
+        "fragment": "default"
+      }
+    ],
+    [
+      9,
+      10,
+      {
+        "fragment": "default"
+      }
+    ],
+    [
+      10,
+      11,
+      {
+        "fragment": "default"
+      }
+    ],
+    [
+      5,
+      12,
+      {
+        "fragment": "default"
+      }
+    ],
+    [
+      12,
+      13,
+      {
+        "fragment": "default"
+      }
+    ],
+    [
+      13,
+      14,
+      {
+        "fragment": "default"
+      }
+    ]
+  ]
+}

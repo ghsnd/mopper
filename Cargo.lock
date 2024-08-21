@@ -340,6 +340,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "iri-string"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f5f6c2df22c009ac44f6f1499308e7a3ac7ba42cd2378475cc691510e1eef1b"
+dependencies = [
+ "memchr",
+ "serde",
+]
+
+[[package]]
 name = "is-terminal"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -391,12 +401,13 @@ checksum = "6c8640c5d730cb13ebd907d8d04b52f55ac9a2eec55b440c8892f40d56c76c1d"
 
 [[package]]
 name = "mopper"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "clap",
  "crossbeam-channel",
  "csv",
  "derive_builder",
+ "iri-string",
  "log",
  "operator",
  "pct-str",
@@ -423,7 +434,7 @@ checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
 [[package]]
 name = "operator"
 version = "0.2.0"
-source = "git+https://github.com/s-minoo/algemaploom-rs#a5fd0fe278ae72d748da5cbe7252c5f81e13d319"
+source = "git+https://github.com/RMLio/algemaploom-rs?tag=v0.4.0#f529b1c56c8871a305e87d0da6150f269840505d"
 dependencies = [
  "anyhow",
  "petgraph",
@@ -444,9 +455,9 @@ dependencies = [
 
 [[package]]
 name = "petgraph"
-version = "0.6.4"
+version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1d3afd2628e69da2be385eb6f2fd57c8ac7977ceeff6dc166ff1657b0e386a9"
+checksum = "b4c5cc86750666a3ed20bdaf5ca2a0344f9c67674cae0515bec2da16fbaa47db"
 dependencies = [
  "fixedbitset",
  "indexmap",

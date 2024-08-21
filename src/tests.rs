@@ -76,4 +76,10 @@ mod test_cases {
         exec("test-resources/rml-testcases/RMLTC0008b-CSV")?;
         Ok(())
     }
+
+    #[test]
+    fn rml_tc_1036_csv() -> Result<(), Error> {
+        exec("test-resources/rml-testcases/RMLTC1036-CSV")?;
+        Ok(())
+    }
 }

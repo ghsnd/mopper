@@ -15,6 +15,7 @@
  */
 
 use crate::function::basic_function::BasicFunction;
+use crate::util::remove_join_alias_prefix;
 
 pub struct ReferenceFunction {
     variable_name: String,
@@ -22,13 +23,16 @@ pub struct ReferenceFunction {
 }
 
 impl ReferenceFunction {
-    pub fn new(variable_name: String) -> Self {
-        ReferenceFunction{variable_name, index: 0}
+    pub fn new(variable_name: String, join_alias: &Option<String>) -> Self {
+        ReferenceFunction{
+            variable_name: remove_join_alias_prefix(&variable_name, join_alias),
+            index: 0
+        }
     }
 }
 
 impl BasicFunction for ReferenceFunction {
-    fn variable_names(&mut self, variable_names: Vec<String>) {
+    fn variable_names(&mut self, variable_names: &[String]) {
         for (index, name) in variable_names.iter().enumerate() {
             if *name == self.variable_name {
                 self.index = index;

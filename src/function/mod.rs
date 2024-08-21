@@ -22,3 +22,5 @@ pub mod template_string;
 pub mod literal;
 pub mod reference;
 pub mod blank_node;
+mod template_parser;
+pub mod template_function_value;

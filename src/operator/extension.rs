@@ -15,6 +15,7 @@
  */
 
 use std::collections::HashMap;
+use std::vec::Vec;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
@@ -28,7 +29,10 @@ use crate::function::constant::ConstantFunction;
 use crate::function::iri::IriFunction;
 use crate::function::literal::LiteralFunction;
 use crate::function::reference::ReferenceFunction;
+use crate::function::template_function_value::TemplateFunctionValueFunction;
 use crate::function::template_string::TemplateStrFunction;
+use crate::function::uri_encode::UriEncodeFunction;
+use crate::util::remove_join_alias_prefix;
 
 pub struct ExtendOperator {
     functions_mutex: Arc<Mutex<Vec<(String, Box<dyn BasicFunction + Send>)>>>,
@@ -90,19 +94,21 @@ impl ExtendOperator {
                 let mut iter = rx_chan.iter();
                 let variable_names_option = iter.next();
                 if let Some(variable_names) = variable_names_option {
+                    let variable_names_without_node_id = &variable_names[1..];
                     functions.iter_mut().for_each(|(_name, function)| {
-                        function.variable_names(variable_names.clone());
+                        function.variable_names(variable_names_without_node_id);
                     });
                 }
 
                 // Let each function process the data
                 for data in iter {
+                    let data_without_node_id = &data[1..];
 
                     // prepend node id
                     let mut node_id_plus_result = vec![self.node_id.clone()];
                     node_id_plus_result.extend(
                         functions.iter()
-                            .map(|(_name, function)| { function.exec(&data) })
+                            .map(|(_name, function)| { function.exec(data_without_node_id) })
                             .flatten()
                     );
 
@@ -122,22 +128,29 @@ fn get_function(function: &Function, join_alias: &Option<String>) -> Result<Box<
             Ok(Box::new(ConstantFunction::new(value.clone())))
         },
         Function::UriEncode { inner_function } => {
-            debug!(" function 'UriEncode'. Ignoring bc of issue in AlgeMapLoom where it occurs at the wrong place (it's handled in template processing now). Just passing through the inner function.");
-            get_function(inner_function, join_alias)
+            debug!(" function 'UriEncode'.");
+            let inner = get_function(inner_function, join_alias)?;
+            Ok(Box::new(UriEncodeFunction::new(inner)))
         },
-        Function::Iri { inner_function } => {
+        Function::Iri { base_iri, inner_function } => {
             debug!(" function 'Iri'");
             let inner = get_function(inner_function, join_alias)?;
-            Ok(Box::new(IriFunction::new(inner)))
+            Ok(Box::new(IriFunction::new(base_iri, inner)))
         },
         Function::TemplateString { value } => {
             debug!(" function 'TemplateString': [{value}]");
             let function = TemplateStrFunction::new(value, join_alias)?;
             Ok(Box::new(function))
         },
-        Function::TemplateFunctionValue { .. } => {
-            error!(" function 'TemplateFunctionValue' not implemented yet.");
-            todo!()
+        Function::TemplateFunctionValue { template, variable_function_pairs } => {
+            let variable_to_function_map: HashMap<String, Box<dyn BasicFunction + Send>> = variable_function_pairs.iter()
+                .map(|(name, function)|{
+                    let template_var_name = remove_join_alias_prefix(name, join_alias);
+                    let function_box = get_function(function, join_alias).unwrap();
+                    (template_var_name, function_box)})
+                .collect();
+            let function = TemplateFunctionValueFunction::new(template, variable_to_function_map, join_alias)?;
+            Ok(Box::new(function))
         },
         Function::BlankNode { inner_function } => {
             debug!(" function 'BlankNode'");
@@ -167,7 +180,7 @@ fn get_function(function: &Function, join_alias: &Option<String>) -> Result<Box<
         },
         Function::Reference { value } => {
             debug!(" function 'Reference': [{value}]");
-            Ok(Box::new(ReferenceFunction::new(value.to_string())))
+            Ok(Box::new(ReferenceFunction::new(value.to_string(), join_alias)))
         },
         Function::Replace { .. } => {
             error!(" function 'Relace' not implemented yet.");

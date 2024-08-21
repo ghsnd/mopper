@@ -1,0 +1,32 @@
+<http://example.com/resource/sport_100> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/ontology/Sport> <http://example.com/graph/sports> .
+<http://example.com/resource/sport_100> <http://www.w3.org/2000/01/rdf-schema#label> "Tennis" <http://example.com/graph/sports> .
+<http://example.com/resource/sport_200> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/ontology/Sport> <http://example.com/graph/sports> .
+<http://example.com/resource/sport_200> <http://www.w3.org/2000/01/rdf-schema#label> "Fietsen" <http://example.com/graph/sports> .
+<http://example.com/resource/sport_300> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/ontology/Sport> <http://example.com/graph/sports> .
+<http://example.com/resource/sport_300> <http://www.w3.org/2000/01/rdf-schema#label> "Vissen" <http://example.com/graph/sports> .
+<http://example.com/resource/sport_400> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/ontology/Sport> <http://example.com/graph/sports> .
+<http://example.com/resource/sport_400> <http://www.w3.org/2000/01/rdf-schema#label> "De sport die niemand doet" <http://example.com/graph/sports> .
+<http://example.com/resource/student_10> <http://example.com/ontology/practises> <http://example.com/resource/sport_100> <http://example.com/graph/practise> .
+<http://example.com/resource/student_10> <http://example.com/ontology/practises> <http://example.com/resource/sport_100> <http://example.com/graph/students> .
+<http://example.com/resource/student_10> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/ontology/Student> <http://example.com/graph/students> .
+<http://example.com/resource/student_10> <http://xmlns.com/foaf/0.1/name> "Venus Williams" <http://example.com/graph/students> .
+<http://example.com/resource/student_20> <http://example.com/ontology/practises> <http://example.com/resource/sport_200> <http://example.com/graph/practise> .
+<http://example.com/resource/student_20> <http://example.com/ontology/practises> <http://example.com/resource/sport_200> <http://example.com/graph/students> .
+<http://example.com/resource/student_20> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/ontology/Student> <http://example.com/graph/students> .
+<http://example.com/resource/student_20> <http://xmlns.com/foaf/0.1/name> "Demi Moore" <http://example.com/graph/students> .
+<http://example.com/resource/student_30> <http://example.com/ontology/practises> <http://example.com/resource/sport_100> <http://example.com/graph/practise> .
+<http://example.com/resource/student_30> <http://example.com/ontology/practises> <http://example.com/resource/sport_100> <http://example.com/graph/students> .
+<http://example.com/resource/student_30> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/ontology/Student> <http://example.com/graph/students> .
+<http://example.com/resource/student_30> <http://xmlns.com/foaf/0.1/name> "Roger F Rabbit" <http://example.com/graph/students> .
+<http://example.com/resource/student_40> <http://example.com/ontology/practises> <http://example.com/resource/sport_300> <http://example.com/graph/practise> .
+<http://example.com/resource/student_40> <http://example.com/ontology/practises> <http://example.com/resource/sport_300> <http://example.com/graph/students> .
+<http://example.com/resource/student_40> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/ontology/Student> <http://example.com/graph/students> .
+<http://example.com/resource/student_40> <http://xmlns.com/foaf/0.1/name> "De René" <http://example.com/graph/students> .
+<http://example.com/resource/student_50> <http://example.com/ontology/practises> <http://example.com/resource/sport_200> <http://example.com/graph/practise> .
+<http://example.com/resource/student_50> <http://example.com/ontology/practises> <http://example.com/resource/sport_200> <http://example.com/graph/students> .
+<http://example.com/resource/student_50> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/ontology/Student> <http://example.com/graph/students> .
+<http://example.com/resource/student_50> <http://xmlns.com/foaf/0.1/name> "Roger De Vlaeminck" <http://example.com/graph/students> .
+<http://example.com/resource/student_60> <http://example.com/ontology/practises> <http://example.com/resource/sport_300> <http://example.com/graph/practise> .
+<http://example.com/resource/student_60> <http://example.com/ontology/practises> <http://example.com/resource/sport_300> <http://example.com/graph/students> .
+<http://example.com/resource/student_60> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.com/ontology/Student> <http://example.com/graph/students> .
+<http://example.com/resource/student_60> <http://xmlns.com/foaf/0.1/name> "Het Loze Visserke" <http://example.com/graph/students> .

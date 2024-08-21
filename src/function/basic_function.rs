@@ -15,7 +15,7 @@
  */
 
 pub trait BasicFunction {
-    fn variable_names(&mut self, _variable_names: Vec<String>) {}  // by default ignore the headers
+    fn variable_names(&mut self, _variable_names: &[String]) {}  // by default ignore the headers
 
     // Returns the type of the result of the function
     // The default is 'str'

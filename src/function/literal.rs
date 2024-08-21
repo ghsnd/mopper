@@ -28,7 +28,7 @@ impl LiteralFunction {
 
 impl BasicFunction for LiteralFunction {
 
-    fn variable_names(&mut self, variable_names: Vec<String>) {
+    fn variable_names(&mut self, variable_names: &[String]) {
         self.inner_function.variable_names(variable_names);
     }
 

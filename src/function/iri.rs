@@ -13,21 +13,27 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
+use iri_string::spec::UriSpec;
+use iri_string::validate::{iri, iri_reference};
+use log::error;
 use crate::function::basic_function::BasicFunction;
 
 pub struct IriFunction {
+    base_iri: Option<String>,
     inner_function: Box<dyn BasicFunction + Send>
 }
 
 impl IriFunction {
-    pub fn new(inner_function: Box<dyn BasicFunction + Send>) -> Self {
-        IriFunction {inner_function}
+    pub fn new(base_iri: &Option<String>, inner_function: Box<dyn BasicFunction + Send>) -> Self {
+        IriFunction {
+            base_iri: base_iri.clone(),
+            inner_function
+        }
     }
 }
 
 impl BasicFunction for IriFunction {
-    fn variable_names(&mut self, variable_names: Vec<String>) {
+    fn variable_names(&mut self, variable_names: &[String]) {
         self.inner_function.variable_names(variable_names);
     }
 
@@ -36,7 +42,29 @@ impl BasicFunction for IriFunction {
     }
 
     fn exec(&self, input: &[String]) -> Vec<String> {
-        // TODO: maybe check if the IRI is valid?
-        self.inner_function.exec(input)
+        let output = self.inner_function.exec(input);
+
+        output.into_iter()
+            .map(|value| {
+                // check if the value is an absolute IRI
+                let absolute_iri_check = iri::<UriSpec>(&value);
+                if absolute_iri_check.is_ok() {
+                    return value;
+                } else {
+                    let iri = match &self.base_iri {
+                        Some(base_iri) => format!("{base_iri}{value}"),
+                        None => value
+                    };
+                    // check if it's a valid IRI
+                    let valid_iri_check = iri_reference::<UriSpec>(&iri);
+                    if valid_iri_check.is_ok() {
+                        return iri
+                    } else {
+                        error!("Invalid IRI: {iri}");
+                        return "INVALID".to_string();
+                    }
+                }
+            })
+            .collect()
     }
 }

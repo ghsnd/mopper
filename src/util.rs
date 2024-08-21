@@ -14,29 +14,15 @@
  *    limitations under the License.
  */
 
-use crate::function::basic_function::BasicFunction;
-
-pub struct BlankNodeFunction {
-    inner_function: Box<dyn BasicFunction + Send>
-}
-
-impl BlankNodeFunction {
-    pub fn new(inner_function: Box<dyn BasicFunction + Send>) -> Self {
-        BlankNodeFunction { inner_function }
-    }
-}
-
-impl BasicFunction for BlankNodeFunction {
-
-    fn variable_names(&mut self, variable_names: &[String]) {
-        self.inner_function.variable_names(variable_names);
-    }
-
-    fn get_result_type(&self) -> &str {
-        "blank"
-    }
-
-    fn exec(&self, input: &[String]) -> Vec<String> {
-        self.inner_function.exec(input)
+pub fn remove_join_alias_prefix(variable_name: &str, join_alias: &Option<String>) -> String {
+    match join_alias {
+        Some(alias) => {
+            if variable_name.starts_with(alias) {
+                variable_name[alias.len() + 1..].to_string()
+            } else {
+                variable_name.to_string()
+            }
+        },
+        None => variable_name.to_string()
     }
 }

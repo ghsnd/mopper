@@ -13,46 +13,46 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 use std::collections::HashMap;
 use crate::error::GeneralError;
 use crate::function::basic_function::BasicFunction;
 use crate::function::template_parser::parse_template;
 
-pub struct TemplateStrFunction {
+pub struct TemplateFunctionValueFunction {
     // ex: A {template} string.
     // [(false, 'A '),(true, template), (false, ' string.')] (a vector with template string parts)
     template_string_parts: Vec<(bool, String)>,
-    variable_names: Vec<String>
+    variable_names: Vec<String>,
+    variable_to_function_map: HashMap<String, Box<dyn BasicFunction + Send>>
 }
 
-impl TemplateStrFunction {
-    pub fn new(template: &str, join_alias: &Option<String>) -> Result<Self, GeneralError> {
-        Ok(TemplateStrFunction{
+impl TemplateFunctionValueFunction {
+    pub fn new(template: &str, variable_function_pairs: HashMap<String, Box<dyn BasicFunction + Send>>, join_alias: &Option<String>) -> Result<Self, GeneralError> {
+        Ok(TemplateFunctionValueFunction {
             template_string_parts: parse_template(template, join_alias)?,
-            variable_names: Vec::with_capacity(1)
+            variable_names: Vec::with_capacity(1),
+            variable_to_function_map: variable_function_pairs
         })
     }
 }
 
-impl BasicFunction for TemplateStrFunction {
+impl BasicFunction for TemplateFunctionValueFunction {
     fn variable_names(&mut self, variable_names: &[String]) {
         self.variable_names = variable_names.to_vec();
+        self.variable_to_function_map.values_mut()
+            .for_each(|funcion| funcion.variable_names(variable_names))
     }
+
     fn exec(&self, input: &[String]) -> Vec<String> {
-        let mut variable_name_to_value_map = HashMap::with_capacity(input.len());
-        for (index, value) in input.iter().enumerate() {
-            let variable_name = &self.variable_names[index];
-            variable_name_to_value_map.insert(variable_name, value);
-        }
-
         let mut result_str = String::new();
-
+        let variable_to_function_map = &self.variable_to_function_map;
         self.template_string_parts.iter()
             .for_each(|(is_variable, part)| {
                 if *is_variable {
-                    let value = variable_name_to_value_map[part];
-                    result_str.push_str(value);
+                    //let value = variable_name_to_value_map[part];
+                    let function = &variable_to_function_map[part];
+                    let output = function.exec(input);
+                    result_str.push_str(&output[0]);
                 } else {
                     result_str.push_str(part);
                 }
@@ -60,3 +60,4 @@ impl BasicFunction for TemplateStrFunction {
         vec![result_str]
     }
 }
+

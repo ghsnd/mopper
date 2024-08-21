@@ -28,9 +28,10 @@ pub mod mopper_options;
 pub mod function;
 pub mod operator;
 
+pub mod util;
+
 #[cfg(test)]
 mod tests;
-
 
 use std::collections::HashMap;
 use std::error::Error;
