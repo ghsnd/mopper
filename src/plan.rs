@@ -21,7 +21,6 @@ use serde_json::Value;
 
 #[derive(Deserialize, Clone)]
 pub struct Node {
-    pub id: String,     // just a name
     pub operator: Operator,
 
     // The edges

@@ -7,13 +7,13 @@
 (*)*That's why mopper tries to do the job as fast as possible!*
 
 A fast and lightweight data-to-RDF mapping tool.
-It executes an [AlgeMapLoom](https://github.com/s-minoo/algemaploom-rs/blob/main/README.md) mapping plan which,
-in turn, can be generated from [RML](https://rml.io/)
-or [ShExML](https://shexml.herminiogarcia.com/) mappings.
-
-This very early experimental version takes a mapping plan file in JSON format
-as input and generates RDF as N-Triples or N-Quads.
-Starting from an RML or ShExML mapping is on the roadmap.
+It consists of a library and a command line interface.
+It takes a mapping document as input (
+[AlgeMapLoom](https://github.com/s-minoo/algemaploom-rs/blob/main/README.md),
+[RML](https://rml.io), or
+[ShExML](https://shexml.herminiogarcia.com/)
+)
+and generates a knowledge graph (in [RDF](https://www.w3.org/TR/rdf11-primer/)).
 
 Conceptually every operator runs in its own thread, and data flow between
 them as a stream of messages (as a kind of simplified actor model).
@@ -31,7 +31,8 @@ To check all options, run `mopper --help`
 Usage: mopper [OPTIONS] --mapping-file <FILE>
 
 Options:
-  -m, --mapping-file <FILE>          The path to the AlgeMapLoom mapping plan (JSON)
+  -m, --mapping-file <FILE>          Required. The path to the mapping file
+  -l, --mapping-lang <LANG>          The language of the mapping file. If not given, AlgeMapLoom is assumed [possible values: rml, shexml]
   -v, --verbose...                   Increase log level
   -q, --quiet                        Be quiet; no logging
       --force-std-out                Force output to standard out, ignoring the targets in the plan. Takes precedence over --force-to-file
@@ -39,6 +40,7 @@ Options:
       --message-buffer-capacity <N>  Set the maximum number of messages each communication channel can hold before blocking the sender thread. `0` means no messages are hold: 'send' and 'receive' must happen at the same time. The default is `128`
   -d, --deduplicate                  Remove duplicate triples or quads. Note that currently deduplication only works on a per-sink basis and has a negative impact on speed and memory consumption
   -h, --help                         Print help
+
 ```
 
 ## Building

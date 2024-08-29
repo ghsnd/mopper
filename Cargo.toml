@@ -1,6 +1,6 @@
 [package]
 name = "mopper"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -10,7 +10,9 @@ csv = "1.3.0"
 crossbeam-channel = "0.5"
 serde_json = "1.0"
 serde = { version = "1.0.198", features = ["derive"] }
-operator = {git = "https://github.com/RMLio/algemaploom-rs", tag = "v0.4.0"}
+operator = {git = "https://github.com/RMLio/algemaploom-rs", rev = "1adfe0d63e122c0db1697e888ebd825cd768ac09"}
+meamer-rs = {git = "https://github.com/RMLio/algemaploom-rs", rev = "1adfe0d63e122c0db1697e888ebd825cd768ac09"}
+plangenerator = {git = "https://github.com/RMLio/algemaploom-rs", rev = "1adfe0d63e122c0db1697e888ebd825cd768ac09"}
 pct-str = "2.0.0"
 stderrlog = "0.6"
 log = "0.4"

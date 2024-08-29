@@ -44,6 +44,9 @@ use ::operator::{Function, IOType, Operator};
 use ::operator::formats::ReferenceFormulation;
 use crossbeam_channel::{bounded, Receiver, Sender};
 use log::{error, info};
+use ltranslator::handler::StringTranslatorHandler;
+use ltranslator::rml::RMLStringHandler;
+use ltranslator::shexml::ShExMLStringHandler;
 use crate::error::GeneralError;
 use crate::mopper_options::{MopperOptions, MopperOptionsBuilder};
 use crate::operator::extension::ExtendOperator;
@@ -53,6 +56,12 @@ use crate::plan::PlanGraph;
 use crate::plan_rewriter::rewrite;
 use crate::sink::writer_sink::WriterSink;
 use crate::source::csv_file::CSVFileSource;
+
+#[derive(Clone)]
+pub enum MappingLang {
+    RML,
+    SHEXML
+}
 
 type VecSender = Sender<Vec<String>>;
 type VecReceiver = Receiver<Vec<String>>;
@@ -211,15 +220,25 @@ pub fn start(algemaploom_plan: &str, options: &MopperOptions) -> Result<(), Box<
             errors.push((err_code, msg));
         }
     }
-    
+
     if errors.is_empty() {
         info!("Done!");
         Ok(())
     } else {
         Err(Box::new(GeneralError::new(errors)))
     }
+
+
+}
+
+pub fn mapping_to_plan(mapping: &str, lang: MappingLang) -> Result<String, Box<dyn Error>> {
+    let handler: Box<dyn StringTranslatorHandler> = match lang {
+        MappingLang::RML => Box::new(RMLStringHandler),
+        MappingLang::SHEXML => Box::new(ShExMLStringHandler)
+    };
     
-    
+    let plan_str = handler.translate(mapping)?.to_string()?;
+    Ok(plan_str)
 }
 
 fn find_file(file: &str, working_dir_hint: &Option<String>) -> Option<PathBuf> {

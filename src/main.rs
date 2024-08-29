@@ -13,13 +13,12 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-
 use std::fs;
 use std::path::PathBuf;
 use clap::Parser;
 use log::info;
 use mopper::mopper_options::MopperOptionsBuilder;
-use mopper::start;
+use mopper::{mapping_to_plan, start, MappingLang};
 
 #[derive(Parser)]
 struct Args {
@@ -27,10 +26,14 @@ struct Args {
     //#[options(help = "print help message")]
     //help: bool,
 
-    /// The path to the AlgeMapLoom mapping plan (JSON).
+    /// Required. The path to the mapping file.
     #[arg(short, long, value_name = "FILE")]
     mapping_file: String,
-    
+
+    /// The language of the mapping file. If not given, AlgeMapLoom is assumed.
+    #[arg(short = 'l', long, value_name = "LANG")]
+    mapping_lang: Option<MappingLangArg>,
+
     /// Increase log level.
     #[arg(short, long, action = clap::ArgAction::Count)]
     verbose: u8,
@@ -38,11 +41,11 @@ struct Args {
     /// Be quiet; no logging.
     #[arg(short, long)]
     quiet: bool,
-    
+
     /// Force output to standard out, ignoring the targets in the plan. Takes precedence over --force-to-file.
     #[arg(long)]
     force_std_out: bool,
-    
+
     /// Force output to file, ignoring the targets in the plan.
     #[arg(long, value_name = "FILE")]
     force_to_file: Option<String>,
@@ -60,6 +63,12 @@ struct Args {
     deduplicate: bool
 }
 
+#[derive(clap::ValueEnum, Clone, Debug)]
+enum MappingLangArg {
+    RML,
+    SHEXML
+}
+
 fn main() {
     let args = Args::parse();
     
@@ -75,11 +84,11 @@ fn main() {
     // Read the execution plan
     info!("Reading mapping plan...");
     let path_to_plan_serialisation = &args.mapping_file;
-    let json_plan = fs::read_to_string(path_to_plan_serialisation)
+    let mapping = fs::read_to_string(path_to_plan_serialisation)
         .expect(format!("Mapping file not found: {}", args.mapping_file).as_str());
     let plan_ser_path = PathBuf::from(path_to_plan_serialisation);
     let mapping_parent_dir_option = plan_ser_path.parent();
-    
+
     // set options
     let mut options_builder = MopperOptionsBuilder::default();
     if let Some(forced_output_file) = args.force_to_file {
@@ -98,8 +107,31 @@ fn main() {
         options_builder.message_buffer_capacity(buffer_capacity);
     }
     let options = options_builder.build().unwrap();
-    
-    if let Err(error) = start(&json_plan, &options) {
+
+
+    let final_mapping = match args.mapping_lang {
+
+        // If the mapping language option is set, first translate RML or ShExML to AlgeMapLoom
+        Some(mapping_lang_arg) => {
+            let mapping_lang = match mapping_lang_arg {
+                MappingLangArg::RML => MappingLang::RML,
+                MappingLangArg::SHEXML => MappingLang::SHEXML
+            };
+            match mapping_to_plan(&mapping, mapping_lang) {
+                Ok(algemap_loom_plan) => algemap_loom_plan,
+                Err(error) => {
+                    eprintln!("{}", error);
+                    std::process::exit(1);
+                }
+            }
+        }
+
+        // no flag set
+        None => mapping
+    };
+
+    if let Err(error) = start(&final_mapping, &options) {
         eprintln!("{}", error);
+        std::process::exit(1);
     }
 }
